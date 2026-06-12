@@ -9,18 +9,32 @@ import { MotiView } from 'moti';
 
 export default function HomeScreen({ navigation }: any) {
   const isDarkMode = useAppStore((state) => state.theme === 'dark');
+  const customSongs = useAppStore((state) => state.customSongs);
   const [searchQuery, setSearchQuery] = useState('');
   const insets = useSafeAreaInsets();
 
   const filteredHymns = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    return mockHymns.filter(
+    
+    // Convertir customSongs al formato Hymn para poder listarlos juntos
+    const mappedCustoms = customSongs.map((cs, idx) => ({
+      id: cs.title || `custom-${idx}`,
+      number: 900 + idx, // Números altos para diferenciarlos
+      title: cs.title || 'Desconocido',
+      lyrics: cs.lyrics || '',
+      category: 'Importada',
+      isCustom: true // Bandera especial
+    }));
+
+    const allHymns = [...mockHymns, ...mappedCustoms];
+
+    return allHymns.filter(
       (hymn) =>
         hymn.title.toLowerCase().includes(q) ||
         hymn.number.toString().includes(q) ||
         hymn.lyrics.toLowerCase().includes(q)
     );
-  }, [searchQuery]);
+  }, [searchQuery, customSongs]);
 
   const renderItem = ({ item, index }: { item: Hymn; index: number }) => {
     return (
@@ -40,7 +54,12 @@ export default function HomeScreen({ navigation }: any) {
               ? 'bg-white/5 border-white/5' 
               : 'bg-black/5 border-black/5'
           }`}
-          onPress={() => navigation.navigate('HymnDetail', { hymnId: item.id })}
+          onPress={() => navigation.navigate('HymnDetail', { 
+            hymnId: item.id, 
+            // @ts-ignore
+            isCustom: item.isCustom, 
+            hymn: item 
+          })}
         >
           <View className="flex-row items-center flex-1">
             <Text className={`font-serif text-3xl font-bold opacity-30 mr-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>

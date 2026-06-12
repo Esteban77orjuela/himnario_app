@@ -1,7 +1,7 @@
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
-import { Home, Heart, Settings } from 'lucide-react-native';
+import { Home, Heart, Settings, Download } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppStore } from '../store/useAppStore';
 import { MotiView } from 'moti';
@@ -10,6 +10,7 @@ import { MotiView } from 'moti';
 import HomeScreen from '../screens/HomeScreen';
 import FavoritesScreen from '../screens/FavoritesScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import ImportScreen from '../screens/ImportScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -47,6 +48,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
             const IconComponent = 
               route.name === 'Inicio' ? Home :
+              route.name === 'Importar' ? Download :
               route.name === 'Favoritos' ? Heart : Settings;
 
             return (
@@ -93,6 +95,7 @@ export default function BottomTabNavigator() {
       screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Inicio" component={HomeScreen} />
+      <Tab.Screen name="Importar" component={ImportScreen} />
       <Tab.Screen name="Favoritos" component={FavoritesScreen} />
       <Tab.Screen name="Ajustes" component={SettingsScreen} />
     </Tab.Navigator>

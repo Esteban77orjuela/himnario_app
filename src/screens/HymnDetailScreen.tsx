@@ -1,23 +1,26 @@
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, Pressable } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { mockHymns } from '../data/hymns';
-import { ArrowLeft, Heart, Search, ZoomIn, ZoomOut } from 'lucide-react-native';
+import { ArrowLeft, Heart, Minus, Plus, ZoomIn, ZoomOut } from 'lucide-react-native';
 import { parseLyricsToWords } from '../utils/lyricsParser';
+import { transposeChord } from '../utils/chordTransposer';
 import { MotiView } from 'moti';
 
 export default function HymnDetailScreen({ route, navigation }: any) {
-  const { hymnId } = route.params;
+  const { hymnId, isCustom, hymn: customHymn } = route.params;
   const isDarkMode = useAppStore((state) => state.theme === 'dark');
   const fontSize = useAppStore((state) => state.fontSize);
   const setFontSize = useAppStore((state) => state.setFontSize);
   const favorites = useAppStore((state) => state.favorites);
   const toggleFavorite = useAppStore((state) => state.toggleFavorite);
   
-  const hymn = mockHymns.find(h => h.id === hymnId);
+  const hymn = isCustom ? customHymn : mockHymns.find(h => h.id === hymnId);
   const [showChords, setShowChords] = useState(true);
+  const [transposeSteps, setTransposeSteps] = useState(0);
   
-  const isFavorite = favorites.includes(hymnId);
+  const isFavorite = favorites.includes(hymnId || (hymn?.title));
 
   const parsedLines = useMemo(() => {
     if (!hymn) return [];
@@ -117,7 +120,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
           from={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 200 }}
-          className="pb-24"
+          className="pb-32"
         >
           {parsedLines.map((line, lineIndex) => (
             <View key={lineIndex} className="flex-row flex-wrap mb-4" style={{ minHeight: showChords ? fontSize * 2.5 : fontSize * 1.5 }}>
@@ -131,7 +134,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
                         className={`font-mono font-bold ${isDarkMode ? 'text-accent-dark' : 'text-accent'}`}
                         style={{ fontSize: fontSize * 0.75, height: fontSize, marginBottom: 2 }}
                       >
-                        {segment.chord || ' '}
+                        {segment.chord ? transposeChord(segment.chord, transposeSteps) : ' '}
                       </Text>
                     )}
                     <Text 
@@ -147,6 +150,39 @@ export default function HymnDetailScreen({ route, navigation }: any) {
           ))}
         </MotiView>
       </ScrollView>
+
+      {/* Floating Transposer Bar (Mini-Player style) */}
+      {showChords && (
+        <MotiView 
+          from={{ opacity: 0, translateY: 50 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          className={`absolute bottom-8 self-center flex-row items-center justify-between px-6 py-3 rounded-full shadow-lg border ${
+            isDarkMode ? 'bg-slate-800 border-slate-700 shadow-black/50' : 'bg-white border-slate-200 shadow-slate-300'
+          }`}
+          style={{ width: '80%', maxWidth: 300 }}
+        >
+          <TouchableOpacity 
+            onPress={() => setTransposeSteps(prev => prev - 1)}
+            className={`p-3 rounded-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}
+          >
+            <Minus size={20} color={isDarkMode ? '#F8FAFC' : '#0F172A'} />
+          </TouchableOpacity>
+          
+          <View className="items-center px-4">
+            <Text className={`font-sans text-xs uppercase tracking-widest ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Tono</Text>
+            <Text className={`font-mono font-bold text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>
+              {transposeSteps > 0 ? `+${transposeSteps}` : transposeSteps}
+            </Text>
+          </View>
+
+          <TouchableOpacity 
+            onPress={() => setTransposeSteps(prev => prev + 1)}
+            className={`p-3 rounded-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}
+          >
+            <Plus size={20} color={isDarkMode ? '#F8FAFC' : '#0F172A'} />
+          </TouchableOpacity>
+        </MotiView>
+      )}
     </SafeAreaView>
   );
 }

@@ -20,5 +20,9 @@ Este documento registra cronológicamente los cambios, decisiones arquitectónic
 ### Fase 4 - Desarrollo (Motor Musical)
 - **Transposition Engine:** Creación de `src/utils/chordTransposer.ts`. Un algoritmo de aritmética modular (base 12) capaz de parsear, normalizar (bemoles a sostenidos) y transponer acordes dinámicamente preservando su sufijo musical.
 - **Scraper Service:** Creación de `src/services/scraperService.ts` usando API `fetch` nativa y expresiones regulares para aislar etiquetas `<pre>` y extraer letras y acordes directamente del HTML.
+- **UI Integration (MVP):** Conexión del motor matemático mediante un mini-reproductor inferior en `HymnDetailScreen` y creación de un `ImportScreen` optimizado por URL directa (UX decision: evitar webviews internos pesados).
+
+### Milestone: Control de Versiones (DevOps Initial)
+- **GitHub Repository:** Primer commit exitoso asegurado tras la implementación de `.gitignore` para proteger información sensible y no subir dependencias.
 
 *(Nota: Esta bitácora se actualizará con cada iteración bajo el framework de trabajo)*

@@ -6,15 +6,15 @@ export interface WordSegment {
 
 export function parseLyricsToWords(lyrics: string): WordSegment[][] {
   const lines = lyrics.split('\n');
-  
+
   return lines.map(line => {
     const segments: WordSegment[] = [];
     let currentChord: string | undefined = undefined;
     let currentText = '';
-    
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i];
-      
+
       if (char === '[') {
         // Push accumulated text before the chord
         if (currentText.length > 0) {
@@ -22,7 +22,7 @@ export function parseLyricsToWords(lyrics: string): WordSegment[][] {
           currentText = '';
           currentChord = undefined;
         }
-        
+
         // Extract chord
         let chord = '';
         i++;
@@ -33,7 +33,7 @@ export function parseLyricsToWords(lyrics: string): WordSegment[][] {
         currentChord = chord;
       } else {
         currentText += char;
-        
+
         // Break by space to allow wrapping
         if (char === ' ') {
           segments.push({ text: currentText, chord: currentChord });
@@ -42,11 +42,11 @@ export function parseLyricsToWords(lyrics: string): WordSegment[][] {
         }
       }
     }
-    
+
     if (currentText.length > 0 || currentChord) {
       segments.push({ text: currentText, chord: currentChord });
     }
-    
+
     return segments;
   });
 }
