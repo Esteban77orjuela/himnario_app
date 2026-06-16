@@ -67,10 +67,14 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
 
     if (rawHtmlBlock && rawHtmlBlock.trim().length > 10) {
       // Limpiamos el texto para que quede puro
-      const rawLyrics = rawHtmlBlock
+      let rawLyrics = rawHtmlBlock
         .replace(/<br\s*\/?>/gi, '\n') // Convertir etiquetas <br> a saltos de línea reales
         .replace(/<[^>]+>/g, '')       // Eliminar cualquier botón o enlace sobrante
         .trim();
+
+      // Destruir el footer de derechos de autor y transcripción de LaCuerda
+      const footerRegex = /Este fichero es trabajo propio de su transcriptor[\s\S]*/i;
+      rawLyrics = rawLyrics.replace(footerRegex, '').trim();
 
       return {
         title,
