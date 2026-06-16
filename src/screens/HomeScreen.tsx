@@ -1,17 +1,19 @@
 import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { FlashList } from '@shopify/flash-list';
 import { mockHymns, Hymn } from '../data/hymns';
-import { Search, ChevronRight } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Search, ChevronRight, Sun, Moon, X } from 'lucide-react-native';
 import { MotiView } from 'moti';
 
 export default function HomeScreen({ navigation }: any) {
   const isDarkMode = useAppStore((state) => state.theme === 'dark');
+  const toggleTheme = useAppStore((state) => state.toggleTheme);
   const customSongs = useAppStore((state) => state.customSongs);
   const [searchQuery, setSearchQuery] = useState('');
-  const insets = useSafeAreaInsets();
+  
+  // ( ... resto de los hooks ...)
 
   const filteredHymns = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -51,26 +53,35 @@ export default function HomeScreen({ navigation }: any) {
           activeOpacity={0.8}
           className={`flex-row items-center p-5 mb-4 mx-4 rounded-3xl border ${
             isDarkMode 
-              ? 'bg-white/5 border-white/5' 
-              : 'bg-black/5 border-black/5'
+              ? 'bg-surface-dark border-white/5 shadow-black/20' 
+              : 'bg-white border-slate-100 shadow-slate-200/50'
           }`}
           onPress={() => navigation.navigate('HymnDetail', { 
             hymnId: item.id, 
-            // @ts-ignore
             isCustom: item.isCustom, 
             hymn: item 
           })}
         >
           <View className="flex-row items-center flex-1">
-            <Text className={`font-serif text-3xl font-bold opacity-30 mr-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>
-              {item.number.toString().padStart(2, '0')}
-            </Text>
-            <View className="flex-1">
-              <Text className={`font-sans text-lg font-semibold mb-1 ${isDarkMode ? 'text-text-dark' : 'text-text'}`}>
+            {!item.isCustom ? (
+              <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/10'}`}>
+                <Text className={`font-serif font-bold text-lg ${isDarkMode ? 'text-primary-dark' : 'text-primary'}`}>
+                  {item.number}
+                </Text>
+              </View>
+            ) : (
+              <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${isDarkMode ? 'bg-accent-dark/20' : 'bg-accent/10'}`}>
+                <Text className={`font-serif font-bold text-lg ${isDarkMode ? 'text-accent-dark' : 'text-accent'}`}>
+                  WEB
+                </Text>
+              </View>
+            )}
+            <View className="flex-1 justify-center">
+              <Text className={`font-sans font-bold text-lg mb-1 ${isDarkMode ? 'text-text-dark' : 'text-text'}`} numberOfLines={1}>
                 {item.title}
               </Text>
               <Text className={`font-sans text-sm ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>
-                Categoría: {item.category}
+                {item.category}
               </Text>
             </View>
           </View>
@@ -81,27 +92,39 @@ export default function HomeScreen({ navigation }: any) {
   };
 
   return (
-    <View className={`flex-1 ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
-      <View style={{ paddingTop: insets.top + 20 }} className="px-6 pb-4">
-        <Text className={`font-serif text-4xl font-bold tracking-tight mb-2 ${isDarkMode ? 'text-text-dark' : 'text-text'}`}>
-          Himnario de Adoración
-        </Text>
-        <Text className={`font-sans text-base mb-6 ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>
-          Encuentra tus alabanzas favoritas
-        </Text>
+    <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
+      <View className="px-6 pt-6 pb-4">
+        <View className="flex-row justify-between items-center mb-6">
+          <View>
+            <Text className={`text-4xl font-serif font-bold tracking-tight ${isDarkMode ? 'text-text-dark' : 'text-text'}`}>
+              Himnario
+            </Text>
+            <Text className={`text-sm font-sans mt-1 ${isDarkMode ? 'text-primary-dark' : 'text-primary'}`}>
+              Tu biblioteca musical
+            </Text>
+          </View>
+          <TouchableOpacity 
+            onPress={toggleTheme}
+            className={`p-3 rounded-2xl ${isDarkMode ? 'bg-surface-dark' : 'bg-white'} shadow-sm`}
+          >
+            {isDarkMode ? <Sun color="#818CF8" size={24} /> : <Moon color="#4F46E5" size={24} />}
+          </TouchableOpacity>
+        </View>
 
-        <View className={`flex-row items-center px-4 py-3.5 rounded-2xl border ${
-          isDarkMode ? 'bg-white/5 border-white/10' : 'bg-white border-black/10 shadow-sm'
-        }`}>
-          <Search color={isDarkMode ? '#A78BFA' : '#4F46E5'} size={20} className="mr-3" />
+        <View className={`flex-row items-center px-4 py-3 rounded-2xl ${isDarkMode ? 'bg-surface-dark/80' : 'bg-white/80'} border border-slate-200/20 shadow-sm`}>
+          <Search color={isDarkMode ? '#94A3B8' : '#64748B'} size={20} />
           <TextInput
-            placeholder="Buscar por título, número o letra..."
-            placeholderTextColor={isDarkMode ? '#9CA3AF' : '#6B7280'}
-            className={`flex-1 font-sans text-base ${isDarkMode ? 'text-white' : 'text-black'}`}
+            placeholder="Buscar por título o número..."
+            placeholderTextColor={isDarkMode ? '#94A3B8' : '#64748B'}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            selectionColor={isDarkMode ? '#A78BFA' : '#4F46E5'}
+            className={`flex-1 ml-3 font-sans text-base ${isDarkMode ? 'text-text-dark' : 'text-text'}`}
           />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <X color={isDarkMode ? '#94A3B8' : '#64748B'} size={20} />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -113,6 +136,6 @@ export default function HomeScreen({ navigation }: any) {
         contentContainerStyle={{ paddingBottom: 120 }} // Space for BottomTabBar
         showsVerticalScrollIndicator={false}
       />
-    </View>
+    </SafeAreaView>
   );
 }

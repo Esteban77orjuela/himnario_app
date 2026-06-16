@@ -1,54 +1,52 @@
 // src/utils/chordTransposer.ts
 
-// Usamos el sistema latino (Do, Re, Mi) ya que es el estándar para himnarios en español.
-const NOTES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
+// Soporte dual: Inglés (A, B, C) y Latino (La, Si, Do)
+const NOTES_EN = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const NOTES_ES = ['Do', 'Do#', 'Re', 'Re#', 'Mi', 'Fa', 'Fa#', 'Sol', 'Sol#', 'La', 'La#', 'Si'];
 
-// Mapeo técnico: musicalmente un "Re bemol" (Reb) suena igual que un "Do sostenido" (Do#). 
-// Normalizamos todo a sostenidos (#) para que el algoritmo matemático sea exacto.
-const FLAT_TO_SHARP: Record<string, string> = {
-  'Reb': 'Do#',
-  'Mib': 'Re#',
-  'Solb': 'Fa#',
-  'Lab': 'Sol#',
-  'Sib': 'La#',
+const FLAT_TO_SHARP_EN: Record<string, string> = {
+  'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#',
+};
+const FLAT_TO_SHARP_ES: Record<string, string> = {
+  'Reb': 'Do#', 'Mib': 'Re#', 'Solb': 'Fa#', 'Lab': 'Sol#', 'Sib': 'La#',
 };
 
-// Expresión regular inteligente: Extrae primero la nota base (Do#) y luego el resto (m7, sus4)
-const CHORD_REGEX = /^(Do#|Re#|Fa#|Sol#|La#|Reb|Mib|Solb|Lab|Sib|Do|Re|Mi|Fa|Sol|La|Si)(.*)$/i;
+// Regex mejorada para detectar ambos idiomas
+const CHORD_REGEX = /^([CDEFGAB]|Do|Re|Mi|Fa|Sol|La|Si)(#|b)?(.*)$/i;
 
-/**
- * Transpone un acorde individual por un número de semitonos.
- * @param chord El acorde original (Ej. "Dom7", "Fa#")
- * @param steps Número de semitonos a subir (+1, +2) o bajar (-1, -2)
- * @returns El acorde transpuesto matemáticamente
- */
 export const transposeChord = (chord: string, steps: number): string => {
   const match = chord.match(CHORD_REGEX);
   
-  if (!match) {
-    // Si la palabra no es un acorde musical válido (ej. "Cantar"), se ignora.
-    return chord; 
-  }
+  if (!match) return chord; 
 
-  let root = match[1]; // Ej. "do"
-  // Estandarizar sintaxis: Primera letra mayúscula, resto minúscula ("Do")
-  root = root.charAt(0).toUpperCase() + root.slice(1).toLowerCase();
+  let root = match[1];
+  const acc = match[2] || '';
+  const suffix = match[3] || '';
+
+  // Determinar si es inglés o español
+  const isEnglish = /^[CDEFGAB]$/i.test(root);
   
-  const suffix = match[2]; // Ej. "m7" (Menor 7ma)
-
-  // Si el usuario importó una canción con Bemoles (b), la pasamos a Sostenidos (#)
-  if (FLAT_TO_SHARP[root]) {
-    root = FLAT_TO_SHARP[root];
+  if (isEnglish) {
+    root = root.toUpperCase();
+  } else {
+    root = root.charAt(0).toUpperCase() + root.slice(1).toLowerCase();
   }
 
-  const currentIndex = NOTES.indexOf(root);
-  if (currentIndex === -1) return chord; // Falla de seguridad
+  const fullRoot = root + acc;
+  let normalizedRoot = fullRoot;
 
-  // LA MAGIA ARQUITECTÓNICA: Aritmética Modular (Base 12)
-  // Sumamos 120 (un múltiplo de 12) para evitar el bug clásico de JS con módulos negativos.
-  // Ej: Do (0) - 2 pasos (Si bemol) -> (0 - 2 + 120) % 12 = 118 % 12 = 10 ("La#"). ¡Perfecto!
+  if (isEnglish && FLAT_TO_SHARP_EN[fullRoot]) {
+    normalizedRoot = FLAT_TO_SHARP_EN[fullRoot];
+  } else if (!isEnglish && FLAT_TO_SHARP_ES[fullRoot]) {
+    normalizedRoot = FLAT_TO_SHARP_ES[fullRoot];
+  }
+
+  const NOTES = isEnglish ? NOTES_EN : NOTES_ES;
+  const currentIndex = NOTES.indexOf(normalizedRoot);
+  
+  if (currentIndex === -1) return chord;
+
   const newIndex = (currentIndex + steps + 120) % 12;
-  
   return NOTES[newIndex] + suffix;
 };
 

@@ -27,6 +27,59 @@ export default function HymnDetailScreen({ route, navigation }: any) {
     return parseLyricsToWords(hymn.lyrics);
   }, [hymn]);
 
+  // Función para renderizar y colorear texto plano (canciones importadas de LaCuerda)
+  const renderColoredPlainText = (lyrics: string, steps: number, showChords: boolean, isDark: boolean) => {
+    if (!showChords) {
+      // Modo Solo Letra: Limpiamos los saltos de línea extra y las líneas de acordes
+      const lines = lyrics.split('\n');
+      const cleanLines: string[] = [];
+      
+      for (const line of lines) {
+        const trimmed = line.trim();
+        // Evitamos empujar múltiples líneas vacías seguidas
+        if (!trimmed) {
+          if (cleanLines.length > 0 && cleanLines[cleanLines.length - 1] !== '') {
+            cleanLines.push('');
+          }
+          continue;
+        }
+
+        // Condición para detectar si es línea de acordes
+        const words = trimmed.split(/[\s/|-]+/).filter(w => w.length > 0 && !w.includes('//'));
+        const chordCount = words.filter(w => /^[CDEFGAB][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*$/i.test(w) || /^(Do|Re|Mi|Fa|Sol|La|Si)[b#]?(?:m|maj|dim|aug|sus|add|[0-9])*$/i.test(w)).length;
+        const isChordLine = words.length > 0 && chordCount / words.length >= 0.6;
+
+        // Si NO es una línea de acordes y no es basura de la página web (ej. guiones largos)
+        if (!isChordLine && !/^[-\s]+$/.test(trimmed)) {
+          // Centramos el texto quitando los espacios excesivos del inicio
+          cleanLines.push(trimmed);
+        }
+      }
+
+      return <Text className="text-center">{cleanLines.join('\n')}</Text>;
+    }
+
+    const lines = lyrics.split('\n');
+    return lines.map((line, i) => {
+      const trimmed = line.trim();
+      const words = trimmed.split(/[\s/|-]+/).filter(w => w.length > 0 && !w.includes('//'));
+      const chordCount = words.filter(w => /^[A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*$/.test(w)).length;
+      const isChordLine = words.length > 0 && chordCount / words.length >= 0.6;
+
+      if (isChordLine) {
+        const chordRegexExact = /^[A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*$/;
+        const chunks = line.split(/(\s+)/).map((chunk, j) => {
+          if (chordRegexExact.test(chunk)) {
+            return <Text key={j} className={isDark ? "text-accent-dark font-bold" : "text-accent font-bold"}>{transposeChord(chunk, steps)}</Text>;
+          }
+          return <Text key={j}>{chunk}</Text>;
+        });
+        return <Text key={i}>{chunks}{'\n'}</Text>;
+      }
+      return <Text key={i}>{line}{'\n'}</Text>;
+    });
+  };
+
   if (!hymn) {
     return (
       <View className={`flex-1 justify-center items-center ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
@@ -37,13 +90,13 @@ export default function HymnDetailScreen({ route, navigation }: any) {
 
   return (
     <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3">
+      {/* Header Premium */}
+      <View className="flex-row items-center justify-between px-6 py-4 shadow-sm z-10" style={{ backgroundColor: isDarkMode ? 'rgba(2, 6, 23, 0.8)' : 'rgba(248, 250, 252, 0.8)' }}>
         <TouchableOpacity 
           onPress={() => navigation.goBack()}
-          className={`p-3 rounded-full ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}
+          className={`p-3 rounded-2xl ${isDarkMode ? 'bg-surface-dark' : 'bg-white'} shadow-sm`}
         >
-          <ArrowLeft color={isDarkMode ? '#F9FAFB' : '#111827'} size={24} />
+          <ArrowLeft color={isDarkMode ? '#818CF8' : '#4F46E5'} size={24} />
         </TouchableOpacity>
         
         <View className="flex-row items-center gap-x-2">
@@ -61,7 +114,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => toggleFavorite(hymnId)}
-            className={`p-3 rounded-full ${isDarkMode ? 'bg-white/10' : 'bg-black/5'}`}
+            className={`p-3 rounded-2xl ${isDarkMode ? 'bg-surface-dark' : 'bg-white'} shadow-sm`}
           >
             <MotiView animate={{ scale: isFavorite ? 1.2 : 1 }} transition={{ type: 'spring' }}>
               <Heart 
@@ -81,35 +134,41 @@ export default function HymnDetailScreen({ route, navigation }: any) {
           animate={{ opacity: 1, translateY: 0 }}
           className="mt-4 mb-8"
         >
-          <View className="flex-row items-center mb-2">
-            <Text className={`font-sans font-bold tracking-widest text-sm uppercase ${isDarkMode ? 'text-primary-dark' : 'text-primary'}`}>
-              Himno {hymn.number.toString().padStart(2, '0')}
-            </Text>
-            <View className={`h-[1px] flex-1 mx-4 ${isDarkMode ? 'bg-white/10' : 'bg-black/10'}`} />
-            <Text className={`font-sans text-xs italic ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>
-              Categoría: {hymn.category}
+          <View className="flex-row items-center mb-3">
+            {!isCustom && (
+              <>
+                <View className={`px-3 py-1 rounded-full ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/10'}`}>
+                  <Text className={`font-sans font-bold tracking-widest text-xs uppercase ${isDarkMode ? 'text-primary-dark' : 'text-primary'}`}>
+                    Himno {hymn.number?.toString().padStart(2, '0') || ''}
+                  </Text>
+                </View>
+                <View className="h-1 w-1 rounded-full mx-3 bg-muted" />
+              </>
+            )}
+            <Text className={`font-sans text-xs uppercase tracking-wider ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>
+              {hymn.category}
             </Text>
           </View>
-          <Text className={`font-serif text-4xl font-bold leading-tight ${isDarkMode ? 'text-text-dark' : 'text-text'}`}>
+          <Text className={`font-serif text-5xl font-bold leading-tight tracking-tight ${isDarkMode ? 'text-text-dark' : 'text-text'}`}>
             {hymn.title}
           </Text>
         </MotiView>
 
-        {/* Toggle Chords */}
-        <View className={`flex-row p-1 mb-8 rounded-xl ${isDarkMode ? 'bg-white/5' : 'bg-black/5'}`}>
+        {/* Toggle Chords (Glass Pill) */}
+        <View className={`flex-row p-1.5 mb-8 rounded-2xl ${isDarkMode ? 'bg-surface-dark/80' : 'bg-white/80'} shadow-sm border border-slate-200/20`}>
           <Pressable 
             onPress={() => setShowChords(false)}
-            className={`flex-1 py-3 rounded-lg items-center ${!showChords ? (isDarkMode ? 'bg-white/10' : 'bg-white shadow-sm') : ''}`}
+            className={`flex-1 py-3 rounded-xl items-center ${!showChords ? (isDarkMode ? 'bg-primary-dark' : 'bg-primary') : ''}`}
           >
-            <Text className={`font-sans font-medium ${!showChords ? (isDarkMode ? 'text-white' : 'text-black') : (isDarkMode ? 'text-muted-dark' : 'text-muted')}`}>
+            <Text className={`font-sans font-bold ${!showChords ? 'text-white' : (isDarkMode ? 'text-muted-dark' : 'text-muted')}`}>
               Letra
             </Text>
           </Pressable>
           <Pressable 
             onPress={() => setShowChords(true)}
-            className={`flex-1 py-3 rounded-lg items-center ${showChords ? (isDarkMode ? 'bg-white/10' : 'bg-white shadow-sm') : ''}`}
+            className={`flex-1 py-3 rounded-xl items-center ${showChords ? (isDarkMode ? 'bg-primary-dark' : 'bg-primary') : ''}`}
           >
-            <Text className={`font-sans font-medium ${showChords ? (isDarkMode ? 'text-white' : 'text-black') : (isDarkMode ? 'text-muted-dark' : 'text-muted')}`}>
+            <Text className={`font-sans font-bold ${showChords ? 'text-white' : (isDarkMode ? 'text-muted-dark' : 'text-muted')}`}>
               Con Notas
             </Text>
           </Pressable>
@@ -122,50 +181,59 @@ export default function HymnDetailScreen({ route, navigation }: any) {
           transition={{ delay: 200 }}
           className="pb-32"
         >
-          {parsedLines.map((line, lineIndex) => (
-            <View key={lineIndex} className="flex-row flex-wrap mb-4" style={{ minHeight: showChords ? fontSize * 2.5 : fontSize * 1.5 }}>
-              {line.length === 0 ? (
-                <Text style={{ fontSize, lineHeight: fontSize * 1.5 }}> </Text>
-              ) : (
-                line.map((segment, segIndex) => (
-                  <View key={segIndex} className="flex-col">
-                    {showChords && (
+          {isCustom ? (
+             <Text 
+                className={`font-mono ${isDarkMode ? 'text-white' : 'text-black'}`}
+                style={{ fontSize, lineHeight: fontSize * 1.6 }}
+             >
+                {renderColoredPlainText(hymn.lyrics, transposeSteps, showChords, isDarkMode)}
+             </Text>
+          ) : (
+            parsedLines.map((line, lineIndex) => (
+              <View key={lineIndex} className="flex-row flex-wrap mb-4" style={{ minHeight: showChords ? fontSize * 2.5 : fontSize * 1.5 }}>
+                {line.length === 0 ? (
+                  <Text style={{ fontSize, lineHeight: fontSize * 1.5 }}> </Text>
+                ) : (
+                  line.map((segment, segIndex) => (
+                    <View key={segIndex} className="flex-col">
+                      {showChords && (
+                        <Text 
+                          className={`font-mono font-bold ${isDarkMode ? 'text-accent-dark' : 'text-accent'}`}
+                          style={{ fontSize: fontSize * 0.75, height: fontSize, marginBottom: 2 }}
+                        >
+                          {segment.chord ? transposeChord(segment.chord, transposeSteps) : ' '}
+                        </Text>
+                      )}
                       <Text 
-                        className={`font-mono font-bold ${isDarkMode ? 'text-accent-dark' : 'text-accent'}`}
-                        style={{ fontSize: fontSize * 0.75, height: fontSize, marginBottom: 2 }}
+                        className={`font-serif ${isDarkMode ? 'text-text-dark/90' : 'text-text/90'}`}
+                        style={{ fontSize, lineHeight: fontSize * 1.5 }}
                       >
-                        {segment.chord ? transposeChord(segment.chord, transposeSteps) : ' '}
+                        {segment.text}
                       </Text>
-                    )}
-                    <Text 
-                      className={`font-serif ${isDarkMode ? 'text-text-dark/90' : 'text-text/90'}`}
-                      style={{ fontSize, lineHeight: fontSize * 1.5 }}
-                    >
-                      {segment.text}
-                    </Text>
-                  </View>
-                ))
-              )}
-            </View>
-          ))}
+                    </View>
+                  ))
+                )}
+              </View>
+            ))
+          )}
         </MotiView>
       </ScrollView>
 
-      {/* Floating Transposer Bar (Mini-Player style) */}
+      {/* Floating Transposer Bar (Premium Glass style) */}
       {showChords && (
         <MotiView 
-          from={{ opacity: 0, translateY: 50 }}
-          animate={{ opacity: 1, translateY: 0 }}
-          className={`absolute bottom-8 self-center flex-row items-center justify-between px-6 py-3 rounded-full shadow-lg border ${
-            isDarkMode ? 'bg-slate-800 border-slate-700 shadow-black/50' : 'bg-white border-slate-200 shadow-slate-300'
+          from={{ opacity: 0, translateY: 50, scale: 0.9 }}
+          animate={{ opacity: 1, translateY: 0, scale: 1 }}
+          className={`absolute bottom-8 self-center flex-row items-center justify-between px-6 py-4 rounded-3xl shadow-2xl border ${
+            isDarkMode ? 'bg-surface-dark border-slate-700/50 shadow-primary-dark/20' : 'bg-white border-slate-100 shadow-primary/20'
           }`}
-          style={{ width: '80%', maxWidth: 300 }}
+          style={{ width: '85%', maxWidth: 320 }}
         >
           <TouchableOpacity 
             onPress={() => setTransposeSteps(prev => prev - 1)}
-            className={`p-3 rounded-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}
+            className={`p-3 rounded-full ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}
           >
-            <Minus size={20} color={isDarkMode ? '#F8FAFC' : '#0F172A'} />
+            <Minus size={24} color={isDarkMode ? '#818CF8' : '#4F46E5'} />
           </TouchableOpacity>
           
           <View className="items-center px-4">
@@ -177,9 +245,9 @@ export default function HymnDetailScreen({ route, navigation }: any) {
 
           <TouchableOpacity 
             onPress={() => setTransposeSteps(prev => prev + 1)}
-            className={`p-3 rounded-full ${isDarkMode ? 'bg-slate-700' : 'bg-slate-100'}`}
+            className={`p-3 rounded-full ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}
           >
-            <Plus size={20} color={isDarkMode ? '#F8FAFC' : '#0F172A'} />
+            <Plus size={24} color={isDarkMode ? '#818CF8' : '#4F46E5'} />
           </TouchableOpacity>
         </MotiView>
       )}
