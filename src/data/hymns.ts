@@ -27,7 +27,7 @@ Mi corazón en[C]tona la can[G]ción:
     id: "2",
     number: 2,
     title: "Sublime Gracia (Amazing Grace)",
-    category: "Salvación",
+    category: "Alabanza",
     lyrics: `Su[G]blime gracia del Se[C]ñor,
 Que a un [G]pecador sal[D]vó;
 Fui [G]ciego mas hoy [C]veo [G]yo,
@@ -47,7 +47,7 @@ Per[G]dido y [D]Él me ha[G]lló.`
     id: "4",
     number: 4,
     title: "Cerca de Ti, Señor",
-    category: "Paz y Consuelo",
+    category: "Adoración",
     lyrics: `[G]Cerca de [C]Ti, Se[G]ñor, [Em]quiero mo[D]rar;
 [G]Tu grande y [C]tierno a[G]mor [D]quiero go[G]zar.
 [G]Llena mi [C]pobre [G]ser, [G]limpia mi [C]cora[G]zón;

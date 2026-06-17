@@ -11,6 +11,7 @@ export default function HomeScreen({ navigation }: any) {
   const isDarkMode = useAppStore((state) => state.theme === 'dark');
   const toggleTheme = useAppStore((state) => state.toggleTheme);
   const customSongs = useAppStore((state) => state.customSongs);
+  const categoryOverrides = useAppStore((state) => state.categoryOverrides);
   const favorites = useAppStore((state) => state.favorites);
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,11 +26,17 @@ export default function HomeScreen({ navigation }: any) {
       number: 900 + idx, // Números altos para diferenciarlos
       title: cs.title || 'Desconocido',
       lyrics: cs.lyrics || '',
-      category: cs.category || 'Importada', // Ahora soporta categorías personalizadas
+      category: categoryOverrides[cs.title || `custom-${idx}`] || cs.category || 'Importada', // Ahora soporta overrides
       isCustom: true // Bandera especial
     }));
 
-    const allHymns = [...mockHymns, ...mappedCustoms];
+    // Aplicar overrides también a los himnos base
+    const mappedMocks = mockHymns.map(h => ({
+      ...h,
+      category: categoryOverrides[h.id] || h.category
+    }));
+
+    const allHymns = [...mappedMocks, ...mappedCustoms];
 
     // Primero filtramos por pestaña activa
     let tabFiltered = allHymns;
