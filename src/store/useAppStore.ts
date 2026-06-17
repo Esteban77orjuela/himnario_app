@@ -3,20 +3,35 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScrapedSong } from '../services/scraperService';
 
+export interface Setlist {
+  id: string;
+  name: string;
+  hymnIds: string[];
+}
+
 interface AppState {
   theme: 'light' | 'dark' | 'system';
   fontSize: number;
   favorites: string[];
   customSongs: ScrapedSong[];
+  categoryOverrides: Record<string, string>;
+  songBPMs: Record<string, number>;
+  setlists: Setlist[];
+  
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
   setFontSize: (size: number) => void;
   addCustomSong: (song: ScrapedSong) => void;
   removeCustomSong: (title: string) => void;
   updateCustomSongCategory: (title: string, category: string) => void;
-  categoryOverrides: Record<string, string>;
   setCategoryOverride: (id: string, category: string) => void;
-  songBPMs: Record<string, number>;
   setSongBPM: (id: string, bpm: number) => void;
+  toggleFavorite: (hymnId: string) => void;
+  
+  createSetlist: (name: string) => void;
+  deleteSetlist: (id: string) => void;
+  addHymnToSetlist: (setlistId: string, hymnId: string) => void;
+  removeHymnFromSetlist: (setlistId: string, hymnId: string) => void;
+  restoreBackup: (data: any) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -28,6 +43,8 @@ export const useAppStore = create<AppState>()(
       customSongs: [],
       categoryOverrides: {},
       songBPMs: {},
+      setlists: [],
+      
       setTheme: (theme) => set({ theme }),
       setFontSize: (size) => set({ fontSize: size }),
       setCategoryOverride: (id, category) => 
@@ -46,9 +63,14 @@ export const useAppStore = create<AppState>()(
         })),
       addCustomSong: (song) =>
         set((state) => {
-          // Prevenir duplicados por título o URL
-          const exists = state.customSongs.find(s => s.title === song.title || s.source === song.source);
-          if (exists) return state;
+          const exists = state.customSongs.find((s) => s.title === song.title);
+          if (exists) {
+            return {
+              customSongs: state.customSongs.map((s) =>
+                s.title === song.title ? { ...s, ...song } : s
+              ),
+            };
+          }
           return { customSongs: [...state.customSongs, song] };
         }),
       removeCustomSong: (title) =>
@@ -60,6 +82,40 @@ export const useAppStore = create<AppState>()(
           customSongs: state.customSongs.map(song => 
             song.title === title ? { ...song, category } : song
           ),
+        })),
+        
+      createSetlist: (name) =>
+        set((state) => ({
+          setlists: [...state.setlists, { id: Date.now().toString(), name, hymnIds: [] }]
+        })),
+      deleteSetlist: (id) =>
+        set((state) => ({
+          setlists: state.setlists.filter(s => s.id !== id)
+        })),
+      addHymnToSetlist: (setlistId, hymnId) =>
+        set((state) => ({
+          setlists: state.setlists.map(s => 
+            s.id === setlistId && !s.hymnIds.includes(hymnId)
+              ? { ...s, hymnIds: [...s.hymnIds, hymnId] }
+              : s
+          )
+        })),
+      removeHymnFromSetlist: (setlistId, hymnId) =>
+        set((state) => ({
+          setlists: state.setlists.map(s => 
+            s.id === setlistId
+              ? { ...s, hymnIds: s.hymnIds.filter(id => id !== hymnId) }
+              : s
+          )
+        })),
+      restoreBackup: (data) =>
+        set((state) => ({
+          ...state,
+          customSongs: data.customSongs || state.customSongs,
+          favorites: data.favorites || state.favorites,
+          setlists: data.setlists || state.setlists,
+          categoryOverrides: data.categoryOverrides || state.categoryOverrides,
+          songBPMs: data.songBPMs || state.songBPMs,
         })),
     }),
     {

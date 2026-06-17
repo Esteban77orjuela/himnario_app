@@ -1,9 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Modal } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useMemo, useRef, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { mockHymns } from '../data/hymns';
-import { ArrowLeft, Heart, Minus, Plus, ZoomIn, ZoomOut, Share, Edit2, Play, Pause, Activity } from 'lucide-react-native';
+import { ArrowLeft, Heart, Minus, Plus, ZoomIn, ZoomOut, Share, Edit2, Play, Pause, Activity, ListPlus, X } from 'lucide-react-native';
 import { parseLyricsToWords } from '../utils/lyricsParser';
 import { transposeChord } from '../utils/chordTransposer';
 import { MotiView } from 'moti';
@@ -20,6 +20,9 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const customSongs = useAppStore((state) => state.customSongs);
   const categoryOverrides = useAppStore((state) => state.categoryOverrides);
   const setCategoryOverride = useAppStore((state) => state.setCategoryOverride);
+  const setlists = useAppStore((state) => state.setlists);
+  const addHymnToSetlist = useAppStore((state) => state.addHymnToSetlist);
+  const [showSetlistModal, setShowSetlistModal] = useState(false);
   
   const viewRef = useRef(null);
   const [isCapturing, setIsCapturing] = useState(false);
@@ -203,6 +206,18 @@ export default function HymnDetailScreen({ route, navigation }: any) {
             <Share color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={20} />
           </TouchableOpacity>
           <TouchableOpacity 
+            onPress={() => {
+              if (setlists.length === 0) {
+                Alert.alert('Sin Repertorios', 'Ve a la pestaña "Repertorios" para crear uno nuevo.');
+              } else {
+                setShowSetlistModal(true);
+              }
+            }}
+            className={`p-2 ml-1 rounded-2xl ${isDarkMode ? 'bg-surface-dark' : 'bg-white'} shadow-sm`}
+          >
+            <ListPlus color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={20} />
+          </TouchableOpacity>
+          <TouchableOpacity 
             onPress={() => toggleFavorite(hymnId)}
             className={`p-2 ml-1 rounded-2xl ${isDarkMode ? 'bg-surface-dark' : 'bg-white'} shadow-sm`}
           >
@@ -378,6 +393,39 @@ export default function HymnDetailScreen({ route, navigation }: any) {
           </TouchableOpacity>
         </MotiView>
       )}
+
+      <Modal visible={showSetlistModal} transparent animationType="slide">
+        <View className="flex-1 justify-end bg-black/50">
+          <View className={`rounded-t-3xl p-6 pb-12 ${isDarkMode ? 'bg-surface-dark' : 'bg-white'}`}>
+            <View className="flex-row justify-between items-center mb-6">
+              <Text className={`font-serif text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                Añadir a Repertorio
+              </Text>
+              <TouchableOpacity onPress={() => setShowSetlistModal(false)} className={`p-2 rounded-full ${isDarkMode ? 'bg-background-dark' : 'bg-slate-100'}`}>
+                <X color={isDarkMode ? '#fff' : '#000'} size={20} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView className="max-h-80">
+              {setlists.map(list => (
+                <TouchableOpacity 
+                  key={list.id} 
+                  onPress={() => {
+                    addHymnToSetlist(list.id, hymnIdKey);
+                    setShowSetlistModal(false);
+                    Alert.alert('¡Añadido!', `La canción se añadió a "${list.name}"`);
+                  }}
+                  className={`flex-row items-center p-4 mb-3 rounded-2xl border ${isDarkMode ? 'bg-background-dark border-slate-700' : 'bg-slate-50 border-slate-200'}`}
+                >
+                  <ListPlus color={isDarkMode ? '#818CF8' : '#4F46E5'} size={24} />
+                  <Text className={`ml-4 font-bold text-lg ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                    {list.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
