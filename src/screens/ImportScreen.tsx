@@ -7,6 +7,7 @@ import { useAppStore } from '../store/useAppStore';
 
 export default function ImportScreen({ navigation }: any) {
   const [url, setUrl] = useState('');
+  const [category, setCategory] = useState('Otra');
   const [loading, setLoading] = useState(false);
   const addCustomSong = useAppStore((state) => state.addCustomSong);
 
@@ -21,7 +22,8 @@ export default function ImportScreen({ navigation }: any) {
     setLoading(false);
 
     if (result.success && result.lyrics) {
-      addCustomSong(result);
+      const songWithCategory = { ...result, category: category !== 'Otra' ? category : 'Importada' };
+      addCustomSong(songWithCategory);
       Alert.alert(
         '¡Éxito!',
         `Se ha importado la canción: ${result.title}`,
@@ -29,7 +31,7 @@ export default function ImportScreen({ navigation }: any) {
           { 
             text: 'Ver Canción', 
             onPress: () => navigation.navigate('HymnDetail', { 
-              hymn: { id: result.title, title: result.title, lyrics: result.lyrics, category: 'Importada' }, 
+              hymn: { id: result.title, title: result.title, lyrics: result.lyrics, category: songWithCategory.category }, 
               isCustom: true 
             }) 
           },
@@ -59,7 +61,7 @@ export default function ImportScreen({ navigation }: any) {
           <Text className="text-slate-300 text-sm font-medium mb-2 uppercase tracking-wider">
             URL de la Canción
           </Text>
-          <View className="flex-row items-center bg-slate-900/50 rounded-xl px-4 py-3 border border-slate-700">
+          <View className="flex-row items-center bg-slate-900/50 rounded-xl px-4 py-3 border border-slate-700 mb-4">
             <LinkIcon size={20} color="#94a3b8" />
             <TextInput
               className="flex-1 text-white ml-3 text-base"
@@ -71,6 +73,25 @@ export default function ImportScreen({ navigation }: any) {
               autoCorrect={false}
               keyboardType="url"
             />
+          </View>
+
+          <Text className="text-slate-300 text-sm font-medium mb-3 uppercase tracking-wider">
+            Categoría (Opcional)
+          </Text>
+          <View className="flex-row gap-2">
+            {['Alabanza', 'Adoración', 'Otra'].map(cat => (
+              <TouchableOpacity
+                key={cat}
+                onPress={() => setCategory(cat)}
+                className={`flex-1 py-2 rounded-lg border items-center ${
+                  category === cat ? 'bg-blue-500 border-blue-500' : 'bg-slate-900 border-slate-700'
+                }`}
+              >
+                <Text className={`font-medium ${category === cat ? 'text-white' : 'text-slate-400'}`}>
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 

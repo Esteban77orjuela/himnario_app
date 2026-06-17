@@ -10,6 +10,7 @@ export interface ScrapedSong {
   lyrics?: string;
   source?: string;
   error?: string;
+  category?: string;
 }
 
 export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
@@ -72,9 +73,19 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
         .replace(/<[^>]+>/g, '')       // Eliminar cualquier botón o enlace sobrante
         .trim();
 
-      // Destruir el footer de derechos de autor y transcripción de LaCuerda
-      const footerRegex = /Este fichero es trabajo propio de su transcriptor[\s\S]*/i;
-      rawLyrics = rawLyrics.replace(footerRegex, '').trim();
+      // Destruir footers de derechos de autor, diccionarios de acordes y transcripción de LaCuerda
+      const stopMarkers = [
+        /Este fichero es trabajo propio de su transcriptor[\s\S]*/i,
+        /Acordes utilizados:?[\s\S]*/i,
+        /Acordes:[\s\S]*/i,
+        /Saludos a [\s\S]*/i
+      ];
+      
+      for (const marker of stopMarkers) {
+        rawLyrics = rawLyrics.replace(marker, '');
+      }
+      
+      rawLyrics = rawLyrics.trim();
 
       return {
         title,

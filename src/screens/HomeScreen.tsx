@@ -1,5 +1,5 @@
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { FlashList } from '@shopify/flash-list';
@@ -11,9 +11,10 @@ export default function HomeScreen({ navigation }: any) {
   const isDarkMode = useAppStore((state) => state.theme === 'dark');
   const toggleTheme = useAppStore((state) => state.toggleTheme);
   const customSongs = useAppStore((state) => state.customSongs);
+  const favorites = useAppStore((state) => state.favorites);
+  const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // ( ... resto de los hooks ...)
+  const [activeTab, setActiveTab] = useState('all');
 
   const filteredHymns = useMemo(() => {
     const q = searchQuery.toLowerCase();
@@ -24,19 +25,30 @@ export default function HomeScreen({ navigation }: any) {
       number: 900 + idx, // Números altos para diferenciarlos
       title: cs.title || 'Desconocido',
       lyrics: cs.lyrics || '',
-      category: 'Importada',
+      category: cs.category || 'Importada', // Ahora soporta categorías personalizadas
       isCustom: true // Bandera especial
     }));
 
     const allHymns = [...mockHymns, ...mappedCustoms];
 
-    return allHymns.filter(
+    // Primero filtramos por pestaña activa
+    let tabFiltered = allHymns;
+    if (activeTab === 'favorites') {
+      tabFiltered = tabFiltered.filter(h => favorites.includes(h.id));
+    } else if (activeTab === 'alabanza') {
+      tabFiltered = tabFiltered.filter(h => h.category.toLowerCase().includes('alabanza'));
+    } else if (activeTab === 'adoracion') {
+      tabFiltered = tabFiltered.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion'));
+    }
+
+    // Luego filtramos por búsqueda
+    return tabFiltered.filter(
       (hymn) =>
         hymn.title.toLowerCase().includes(q) ||
         hymn.number.toString().includes(q) ||
         hymn.lyrics.toLowerCase().includes(q)
     );
-  }, [searchQuery, customSongs]);
+  }, [searchQuery, customSongs, activeTab, favorites]);
 
   const renderItem = ({ item, index }: { item: Hymn; index: number }) => {
     return (
@@ -111,7 +123,7 @@ export default function HomeScreen({ navigation }: any) {
           </TouchableOpacity>
         </View>
 
-        <View className={`flex-row items-center px-4 py-3 rounded-2xl ${isDarkMode ? 'bg-surface-dark/80' : 'bg-white/80'} border border-slate-200/20 shadow-sm`}>
+        <View className={`flex-row items-center px-4 py-3 rounded-2xl ${isDarkMode ? 'bg-surface-dark/80' : 'bg-white/80'} border border-slate-200/20 shadow-sm mb-4`}>
           <Search color={isDarkMode ? '#94A3B8' : '#64748B'} size={20} />
           <TextInput
             placeholder="Buscar por título o número..."
@@ -126,6 +138,30 @@ export default function HomeScreen({ navigation }: any) {
             </TouchableOpacity>
           )}
         </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
+          {['all', 'favorites', 'alabanza', 'adoracion'].map((tab) => {
+            const labels: any = { all: 'Todos', favorites: 'Favoritos', alabanza: 'Alabanza', adoracion: 'Adoración' };
+            const isActive = activeTab === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveTab(tab)}
+                className={`px-5 py-2 mr-3 rounded-full border ${
+                  isActive 
+                    ? (isDarkMode ? 'bg-primary-dark border-primary-dark' : 'bg-primary border-primary')
+                    : (isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200')
+                }`}
+              >
+                <Text className={`font-sans font-bold ${
+                  isActive ? 'text-white' : (isDarkMode ? 'text-slate-400' : 'text-slate-600')
+                }`}>
+                  {labels[tab]}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </View>
 
       <FlashList
