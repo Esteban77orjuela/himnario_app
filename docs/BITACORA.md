@@ -1,28 +1,61 @@
-# Bitácora del Proyecto (Changelog)
+# Bitácora del Proyecto — AppHimnario
+*(Changelog profesional por iteración Agile)*
 
-Este documento registra cronológicamente los cambios, decisiones arquitectónicas, configuraciones e implementaciones realizadas en el proyecto, siguiendo metodologías ágiles.
+---
 
-## [1.0.0] - Inicio del Desarrollo Profesional
-### Fase 0 - Visión y Setup Inicial
-- **Configuración de Proyecto:** Inicialización de Expo SDK 52/54 con React Native 0.81.5 y React 19.1.0.
-- **Limpieza de Caché y Dependencias:** Reconfiguración total del ecosistema tras conflictos de Babel y SVG. 
-- **Estilos:** Configuración estable de NativeWind v2 con TailwindCSS 3.3.2.
-- **Navegación:** Implementación inicial de `@react-navigation/native` (Stack y Bottom Tabs).
-- **Metodología:** Integración de la estructura de las 13 Fases del SDLC profesional en el proyecto (`docs/METHODOLOGY.md`).
+## [1.2.0] — 2026-06-17 | Iteración 3: UX Premium
+### Nuevas Funcionalidades
+- **Búsqueda Inteligente (Fuzzy Search):** Se integró la librería `fuse.js`. El motor de búsqueda ahora tolera errores ortográficos y busca tanto en título como en letra de las canciones.
+- **Modo Inmersivo:** Al tocar el centro de la pantalla de un himno, la interfaz (cabecera, controles) desaparece con animación suave (`MotiView`), dejando solo la letra. Un segundo toque la restaura.
+- **Tipografía Personalizable:** Se añadió el estado `fontFamily: 'sans' | 'serif' | 'mono'` al store de Zustand. El usuario puede elegir entre 3 estilos de letra en la pantalla de Ajustes y el cambio se aplica globalmente.
+- **Zoom con Pellizco (Pinch-to-Zoom):** Integración de `PinchGestureHandler` de `react-native-gesture-handler` para ajustar el tamaño de la letra con dos dedos directamente en la pantalla de la canción.
 
-### Fase 1 - Definición de Requerimientos y Arquitectura Lógica
-- **Project Charter:** Creación de `docs/PROJECT_CHARTER.md` documentando el MVP (100% offline, transposición de acordes, scraper web de canciones, favoritos, modo oscuro).
-- **Diseño Arquitectónico (Planeación):** Definición de la estructura de la aplicación usando patrón por capas (`src/services`, `src/utils`, `src/store`).
+### Cambios Técnicos
+- `HomeScreen.tsx`: Importación y uso de `Fuse.js` en el `useMemo` de filtrado.
+- `useAppStore.ts`: Nuevo campo `fontFamily` en la interfaz y estado, con su método `setFontFamily`.
+- `SettingsScreen.tsx`: Nueva sección "TIPOGRAFÍA" con 3 botones de selección reactivos al store.
+- `HymnDetailScreen.tsx`: Integración de `PinchGestureHandler`, `isImmersiveMode` y uso dinámico de `fontClass` en todos los textos de la canción.
 
-### Fase 3 - Diseño Técnico (Ejecución)
-- **Estructura de Carpetas:** Aprobación e inicialización del "Separation of Concerns" bajo la carpeta `/src`.
+---
 
-### Fase 4 - Desarrollo (Motor Musical)
-- **Transposition Engine:** Creación de `src/utils/chordTransposer.ts`. Un algoritmo de aritmética modular (base 12) capaz de parsear, normalizar (bemoles a sostenidos) y transponer acordes dinámicamente preservando su sufijo musical.
-- **Scraper Service:** Creación de `src/services/scraperService.ts` usando API `fetch` nativa y expresiones regulares para aislar etiquetas `<pre>` y extraer letras y acordes directamente del HTML.
-- **UI Integration (MVP):** Conexión del motor matemático mediante un mini-reproductor inferior en `HymnDetailScreen` y creación de un `ImportScreen` optimizado por URL directa (UX decision: evitar webviews internos pesados).
+## [1.1.0] — 2026-06-17 | Iteración 2: Organización y Herramientas en Vivo
+### Nuevas Funcionalidades
+- **Auto-Scroll:** Desplazamiento automático de la letra sin tocar la pantalla para músicos en vivo.
+- **Metrónomo Visual:** Pulso visual configurado por BPM, con memoria de velocidad por canción (guardado en el store).
+- **Sistema de Repertorios (Setlists):** Reemplazo completo del sistema de Favoritos por Repertorios. Creación, gestión y eliminación de listas personalizadas (ej. "Culto de Domingo", "Ensayo Voces").
+- **Añadir a Repertorio:** Modal bottom-sheet en `HymnDetailScreen` para agregar la canción actual a cualquier repertorio creado.
+- **Copia de Seguridad (Backup/Restore):** Sistema de exportación e importación de toda la biblioteca como archivo `himnario_backup.json`, sin dependencia de servidores externos.
+- **Categorías:** Filtros de Alabanza / Adoración. Cada canción puede reasignarse a una categoría diferente desde su pantalla de detalle.
 
-### Milestone: Control de Versiones (DevOps Initial)
-- **GitHub Repository:** Primer commit exitoso asegurado tras la implementación de `.gitignore` para proteger información sensible y no subir dependencias.
+### Cambios Técnicos
+- `useAppStore.ts`: Nuevas interfaces `Setlist`, nuevos campos `setlists`, `songBPMs`, métodos CRUD para setlists y `restoreBackup`.
+- `SetlistsScreen.tsx`: Nueva pantalla principal de Repertorios (reemplaza FavoritesScreen).
+- `SetlistDetailScreen.tsx`: Pantalla de detalle de un repertorio.
+- `BottomTabNavigator.tsx`: Pestaña "Favoritos" sustituida por "Repertorios".
+- `AppNavigator.tsx`: Nueva ruta para `SetlistDetailScreen`.
+- `SettingsScreen.tsx`: Nueva sección de Copia de Seguridad.
 
-*(Nota: Esta bitácora se actualizará con cada iteración bajo el framework de trabajo)*
+### Dependencias Añadidas
+- `expo-file-system`, `expo-document-picker`, `expo-sharing` (con `--legacy-peer-deps`)
+
+---
+
+## [1.0.0] — 2026-06-09 | Iteración 1: Fundación y MVP
+### Funcionalidades MVP
+- Catálogo base de himnos en `src/data/hymns.ts`.
+- Motor de transposición de acordes (`src/utils/chordTransposer.ts`). Algoritmo de aritmética modular base-12.
+- Scraper de canciones web (`src/services/scraperService.ts`). Extrae letras/acordes de HTML con regex.
+- Importación de canciones desde URL directa (LaCuerda.net).
+- Sistema de Favoritos con persistencia.
+- Modo Oscuro / Claro con persistencia.
+- Visualización de letra con y sin acordes.
+- Zoom de texto (botones + y -).
+
+### Setup Técnico
+- **Framework:** Expo SDK 54, React Native 0.81.5, React 19.1.0.
+- **Estilos:** NativeWind v2 con TailwindCSS 3.3.2.
+- **Estado:** Zustand + AsyncStorage (`himnario-storage`).
+- **Navegación:** React Navigation (Stack + BottomTabs).
+- **UI Extras:** `@shopify/flash-list`, `moti`, `lucide-react-native`.
+- **Primer commit** a GitHub con `.gitignore` profesional.
+- **Documentación inicial:** `docs/PROJECT_CHARTER.md`, `docs/METHODOLOGY.md`, `docs/BITACORA.md`.

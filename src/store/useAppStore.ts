@@ -11,6 +11,7 @@ export interface Setlist {
 
 interface AppState {
   theme: 'light' | 'dark' | 'system';
+  fontFamily: 'sans' | 'serif' | 'mono';
   fontSize: number;
   favorites: string[];
   customSongs: ScrapedSong[];
@@ -19,6 +20,7 @@ interface AppState {
   setlists: Setlist[];
   
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  setFontFamily: (font: 'sans' | 'serif' | 'mono') => void;
   setFontSize: (size: number) => void;
   addCustomSong: (song: ScrapedSong) => void;
   removeCustomSong: (title: string) => void;
@@ -37,7 +39,8 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      theme: 'dark', // Default to dark for that premium feel
+      theme: 'system',
+      fontFamily: 'sans',
       fontSize: 18,
       favorites: [],
       customSongs: [],
@@ -46,6 +49,7 @@ export const useAppStore = create<AppState>()(
       setlists: [],
       
       setTheme: (theme) => set({ theme }),
+      setFontFamily: (fontFamily) => set({ fontFamily }),
       setFontSize: (size) => set({ fontSize: size }),
       setCategoryOverride: (id, category) => 
         set((state) => ({

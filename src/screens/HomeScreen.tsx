@@ -6,6 +6,7 @@ import { FlashList } from '@shopify/flash-list';
 import { mockHymns, Hymn } from '../data/hymns';
 import { Search, ChevronRight, Sun, Moon, X } from 'lucide-react-native';
 import { MotiView } from 'moti';
+import Fuse from 'fuse.js';
 
 export default function HomeScreen({ navigation }: any) {
   const isDarkMode = useAppStore((state) => state.theme === 'dark');
@@ -48,14 +49,17 @@ export default function HomeScreen({ navigation }: any) {
       tabFiltered = tabFiltered.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion'));
     }
 
-    // Luego filtramos por búsqueda
-    return tabFiltered.filter(
-      (hymn) =>
-        hymn.title.toLowerCase().includes(q) ||
-        hymn.number.toString().includes(q) ||
-        hymn.lyrics.toLowerCase().includes(q)
-    );
-  }, [searchQuery, customSongs, activeTab, favorites]);
+    if (!q) return tabFiltered;
+
+    // Luego filtramos por búsqueda usando Fuse.js para ser tolerantes a errores
+    const fuse = new Fuse(tabFiltered, {
+      keys: ['title', 'lyrics', 'number'],
+      threshold: 0.3, // 0 = match perfecto, 1 = todo. 0.3 es tolerante pero preciso.
+      ignoreLocation: true,
+    });
+
+    return fuse.search(q).map(result => result.item);
+  }, [searchQuery, customSongs, activeTab, favorites, categoryOverrides]);
 
   const renderItem = ({ item, index }: { item: Hymn; index: number }) => {
     return (

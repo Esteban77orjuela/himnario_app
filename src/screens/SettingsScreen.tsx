@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../store/useAppStore';
-import { Moon, Sun, DownloadCloud, UploadCloud, Info } from 'lucide-react-native';
+import { Moon, Sun, DownloadCloud, UploadCloud, Info, Type } from 'lucide-react-native';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
@@ -10,6 +10,8 @@ export default function SettingsScreen() {
   const isDarkMode = useAppStore((state) => state.theme === 'dark');
   const setTheme = useAppStore((state) => state.setTheme);
   const restoreBackup = useAppStore((state) => state.restoreBackup);
+  const fontFamily = useAppStore((state) => state.fontFamily);
+  const setFontFamily = useAppStore((state) => state.setFontFamily);
 
   const toggleTheme = () => {
     setTheme(isDarkMode ? 'light' : 'dark');
@@ -95,6 +97,40 @@ export default function SettingsScreen() {
                 trackColor={{ false: '#cbd5e1', true: '#818CF8' }}
                 thumbColor={isDarkMode ? '#ffffff' : '#ffffff'}
               />
+            </View>
+          </View>
+        </View>
+
+        <View className="mb-8">
+          <Text className={`text-sm font-bold mb-4 ml-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>TIPOGRAFÍA (LETRAS)</Text>
+          <View className={`rounded-3xl border ${isDarkMode ? 'bg-surface-dark border-white/5' : 'bg-white border-slate-100'} p-4`}>
+            <View className={`flex-row items-center mb-4`}>
+              <View className={`p-2 rounded-xl mr-4 ${isDarkMode ? 'bg-fuchsia-500/20' : 'bg-fuchsia-50'}`}>
+                <Type color={isDarkMode ? '#E879F9' : '#C026D3'} size={24} />
+              </View>
+              <Text className={`font-bold text-lg ${isDarkMode ? 'text-text-dark' : 'text-text'}`}>Estilo de Fuente</Text>
+            </View>
+            <View className="flex-row justify-between mt-2">
+              <TouchableOpacity 
+                onPress={() => setFontFamily('sans')}
+                className={`flex-1 py-3 items-center rounded-xl border ${fontFamily === 'sans' ? (isDarkMode ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-fuchsia-600 border-fuchsia-600') : (isDarkMode ? 'border-slate-700 bg-background-dark' : 'border-slate-200 bg-slate-50')} mr-2`}
+              >
+                <Text className={`font-sans font-bold ${fontFamily === 'sans' ? 'text-white' : (isDarkMode ? 'text-slate-300' : 'text-slate-600')}`}>Moderna</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                onPress={() => setFontFamily('serif')}
+                className={`flex-1 py-3 items-center rounded-xl border ${fontFamily === 'serif' ? (isDarkMode ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-fuchsia-600 border-fuchsia-600') : (isDarkMode ? 'border-slate-700 bg-background-dark' : 'border-slate-200 bg-slate-50')} mr-2`}
+              >
+                <Text className={`font-serif font-bold ${fontFamily === 'serif' ? 'text-white' : (isDarkMode ? 'text-slate-300' : 'text-slate-600')}`}>Clásica</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => setFontFamily('mono')}
+                className={`flex-1 py-3 items-center rounded-xl border ${fontFamily === 'mono' ? (isDarkMode ? 'bg-fuchsia-500 border-fuchsia-500' : 'bg-fuchsia-600 border-fuchsia-600') : (isDarkMode ? 'border-slate-700 bg-background-dark' : 'border-slate-200 bg-slate-50')}`}
+              >
+                <Text className={`font-mono font-bold ${fontFamily === 'mono' ? 'text-white' : (isDarkMode ? 'text-slate-300' : 'text-slate-600')}`}>Exacta</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
