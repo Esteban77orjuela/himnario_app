@@ -1,15 +1,27 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, Alert, Linking, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Download, Link as LinkIcon, CheckCircle } from 'lucide-react-native';
+import { Download, Link as LinkIcon, CheckCircle, Search } from 'lucide-react-native';
 import { scrapeSongFromUrl } from '../services/scraperService';
 import { useAppStore } from '../store/useAppStore';
+import { useIsDarkMode } from '../utils/useIsDarkMode';
 
 export default function ImportScreen({ navigation }: any) {
   const [url, setUrl] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('Otra');
   const [loading, setLoading] = useState(false);
   const addCustomSong = useAppStore((state) => state.addCustomSong);
+  const isDarkMode = useIsDarkMode();
+
+  const handleSearch = () => {
+    if (!searchQuery.trim()) {
+      Alert.alert('Aviso', 'Por favor ingresa el nombre de la canción');
+      return;
+    }
+    const query = searchQuery.trim().replace(/\s+/g, '+');
+    Linking.openURL(`https://acordes.lacuerda.net/busca.php?exp=${query}`);
+  };
 
   const handleImport = async () => {
     if (!url.trim()) {
@@ -45,23 +57,50 @@ export default function ImportScreen({ navigation }: any) {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-slate-900">
-      <View className="p-6 flex-1">
-        <View className="mb-8 items-center">
-          <View className="w-16 h-16 bg-blue-500/20 rounded-full items-center justify-center mb-4">
-            <Download size={32} color="#3b82f6" />
+    <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <ScrollView className="flex-1 p-6" contentContainerStyle={{ flexGrow: 1 }}>
+          <View className="mb-6 items-center">
+            <View className={`w-16 h-16 rounded-full items-center justify-center mb-4 ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/20'}`}>
+              <Download size={32} color={isDarkMode ? '#818CF8' : '#4F46E5'} />
+            </View>
+            <Text className={`text-2xl font-bold text-center mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>Importar Canción</Text>
+            <Text className={`text-center text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
+              Busca una canción en LaCuerda o pega directamente el enlace para guardarla en tu dispositivo.
+            </Text>
           </View>
-          <Text className="text-2xl font-bold text-white text-center mb-2">Importar Canción</Text>
-          <Text className="text-slate-400 text-center text-base">
-            Pega el enlace de una página con acordes (ej. LaCuerda) para guardarla offline en tu dispositivo.
-          </Text>
-        </View>
 
-        <View className="bg-slate-800/50 p-4 rounded-2xl border border-slate-700/50 mb-6">
-          <Text className="text-slate-300 text-sm font-medium mb-2 uppercase tracking-wider">
-            URL de la Canción
-          </Text>
-          <View className="flex-row items-center bg-slate-900/50 rounded-xl px-4 py-3 border border-slate-700 mb-4">
+          {/* Buscador Integrado */}
+          <View className={`p-4 rounded-2xl border mb-6 ${isDarkMode ? 'bg-surface-dark/50 border-slate-700/50' : 'bg-white border-slate-200'}`}>
+            <Text className={`text-sm font-medium mb-2 uppercase tracking-wider ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+              1. Buscar en LaCuerda
+            </Text>
+            <View className={`flex-row items-center rounded-xl px-4 py-1 border mb-4 ${isDarkMode ? 'bg-background-dark/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
+              <TextInput
+                className={`flex-1 text-base py-3 ${isDarkMode ? 'text-white' : 'text-black'}`}
+                placeholder="Ej. Gracias a Dios"
+                placeholderTextColor={isDarkMode ? '#64748b' : '#94a3b8'}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="words"
+                returnKeyType="search"
+                onSubmitEditing={handleSearch}
+              />
+              <TouchableOpacity onPress={handleSearch} className={`ml-2 p-2 rounded-lg ${isDarkMode ? 'bg-primary-dark' : 'bg-primary'}`}>
+                <Search size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+            <Text className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
+              Al buscar se abrirá tu navegador. Encuentra la canción, copia su URL (dirección) y pégala abajo.
+            </Text>
+          </View>
+
+          {/* Input de URL */}
+          <View className={`p-4 rounded-2xl border mb-6 ${isDarkMode ? 'bg-surface-dark/50 border-slate-700/50' : 'bg-white border-slate-200'}`}>
+            <Text className={`text-sm font-medium mb-2 uppercase tracking-wider ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
+              2. Pegar URL de la Canción
+            </Text>
+            <View className={`flex-row items-center rounded-xl px-4 py-3 border mb-4 ${isDarkMode ? 'bg-background-dark/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
             <LinkIcon size={20} color="#94a3b8" />
             <TextInput
               className="flex-1 text-white ml-3 text-base"
@@ -99,7 +138,7 @@ export default function ImportScreen({ navigation }: any) {
           onPress={handleImport}
           disabled={loading || !url}
           className={`py-4 rounded-xl items-center justify-center flex-row shadow-lg shadow-blue-500/20 ${
-            loading || !url ? 'bg-blue-500/50' : 'bg-blue-500'
+            loading || !url ? (isDarkMode ? 'bg-primary-dark/50' : 'bg-primary/50') : (isDarkMode ? 'bg-primary-dark' : 'bg-primary')
           }`}
         >
           {loading ? (
@@ -112,14 +151,15 @@ export default function ImportScreen({ navigation }: any) {
           )}
         </TouchableOpacity>
 
-        <View className="mt-auto">
-          <View className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20">
-            <Text className="text-blue-200 text-sm leading-relaxed">
-              💡 <Text className="font-bold">Tip de UX:</Text> Es mucho más rápido buscar la canción en tu navegador (Chrome/Safari), copiar el enlace y pegarlo aquí, en lugar de cargar navegadores pesados dentro de la app.
+        <View className="mt-8">
+          <View className={`p-4 rounded-xl border ${isDarkMode ? 'bg-primary-dark/10 border-primary-dark/20' : 'bg-primary/10 border-primary/20'}`}>
+            <Text className={`text-sm leading-relaxed ${isDarkMode ? 'text-primary-dark' : 'text-primary'}`}>
+              💡 <Text className="font-bold">Tip de UX:</Text> Es mucho más rápido buscar la canción aquí, abrir tu navegador, copiar el enlace y pegarlo, en lugar de cargar navegadores pesados dentro de la app.
             </Text>
           </View>
         </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

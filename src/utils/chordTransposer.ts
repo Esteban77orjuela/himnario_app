@@ -12,7 +12,8 @@ const FLAT_TO_SHARP_ES: Record<string, string> = {
 };
 
 // Regex mejorada para detectar ambos idiomas
-const CHORD_REGEX = /^([CDEFGAB]|Do|Re|Mi|Fa|Sol|La|Si)(#|b)?(.*)$/i;
+// Las notas españolas van primero para evitar que "Do" se detecte solo como "D"
+const CHORD_REGEX = /^(Do|Re|Mi|Fa|Sol|La|Si|[CDEFGAB])(#|b)?(.*)$/i;
 
 export const transposeChord = (chord: string, steps: number): string => {
   const match = chord.match(CHORD_REGEX);
@@ -57,20 +58,22 @@ export const transposeChord = (chord: string, steps: number): string => {
 export const transposeLine = (line: string, steps: number): string => {
   if (steps === 0) return line;
 
-  // Separa la línea por espacios, pero manteniendo los espacios intactos para no desalinear los acordes
   const tokens = line.split(/(\s+)/);
+  const hasBrackets = /\[.*\]/.test(line);
   
   return tokens.map(token => {
-    if (!token.trim()) return token; // Ignorar espacios en blanco
+    if (!token.trim()) return token;
     
-    // Soporte avanzado: Si el acorde viene envuelto en corchetes "[Dom]" (Formato muy usado en LaCuerda)
     const bracketMatch = token.match(/^\[(.*)\]$/);
     if (bracketMatch) {
       const transposed = transposeChord(bracketMatch[1], steps);
       return `[${transposed}]`;
     }
 
-    // Si es un acorde suelto (Ej: en una línea que solo tiene acordes)
+    // Si hay corchetes en la línea, solo transpone los acordes entre corchetes
+    if (hasBrackets) return token;
+
+    // Si no hay corchetes, transpone todo (asume línea de solo acordes)
     return transposeChord(token, steps);
   }).join('');
 };

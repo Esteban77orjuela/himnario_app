@@ -8,30 +8,43 @@ module.exports = {
     extend: {
       colors: {
         background: {
-          DEFAULT: '#F8FAFC',
-          dark: '#020617', // Very deep slate, almost black
+          DEFAULT: '#F7F4F0',
+          dark: '#0B0815',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          dark: '#0F172A',
+          dark: '#16112B',
+        },
+        'surface-elevated': {
+          DEFAULT: '#FFFFFF',
+          dark: '#1E1936',
         },
         primary: {
-          DEFAULT: '#4F46E5', // Indigo 600
-          dark: '#818CF8',    // Indigo 400
+          DEFAULT: '#6D4FC6',
+          dark: '#A78BFA',
         },
         accent: {
-          DEFAULT: '#EC4899', // Pink 500
-          dark: '#F472B6',    // Pink 400
+          DEFAULT: '#E04098',
+          dark: '#F472B6',
         },
         text: {
-          DEFAULT: '#0F172A',
-          dark: '#F8FAFC',
+          DEFAULT: '#1A1528',
+          dark: '#F1F0F7',
         },
         muted: {
-          DEFAULT: '#64748B',
-          dark: '#94A3B8',
-        }
-      }
+          DEFAULT: '#8B84A0',
+          dark: '#9C96B8',
+        },
+        border: {
+          DEFAULT: '#E8E4EC',
+          dark: '#2A2444',
+        },
+      },
+      fontFamily: {
+        sans: ['Inter', 'System'],
+        serif: ['PlayfairDisplay', 'Georgia'],
+        mono: ['monospace'],
+      },
     },
   },
   plugins: [],

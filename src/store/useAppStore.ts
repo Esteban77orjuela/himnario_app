@@ -20,6 +20,7 @@ interface AppState {
   setlists: Setlist[];
   
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  toggleTheme: () => void;
   setFontFamily: (font: 'sans' | 'serif' | 'mono') => void;
   setFontSize: (size: number) => void;
   addCustomSong: (song: ScrapedSong) => void;
@@ -49,6 +50,9 @@ export const useAppStore = create<AppState>()(
       setlists: [],
       
       setTheme: (theme) => set({ theme }),
+      toggleTheme: () => set((state) => ({ 
+        theme: state.theme === 'dark' ? 'light' : 'dark' 
+      })),
       setFontFamily: (fontFamily) => set({ fontFamily }),
       setFontSize: (size) => set({ fontSize: size }),
       setCategoryOverride: (id, category) => 

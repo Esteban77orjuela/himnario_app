@@ -82,7 +82,7 @@ export function transposePlainText(lyrics: string, steps: number, showChords: bo
 }
 
 // Algoritmo para detectar si una línea es de "Solo Acordes" (Formato LaCuerda)
-function isChordLine(line: string): boolean {
+export function isChordLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
 
@@ -90,8 +90,8 @@ function isChordLine(line: string): boolean {
   const words = trimmed.split(/[\s/|-]+/).filter(w => w.length > 0 && !w.includes('//'));
   if (words.length === 0) return false;
 
-  // Expresión regular matemática para un acorde perfecto
-  const chordRegex = /^[A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*$/;
+  // Expresión regular matemática para un acorde (soporta bajos como C/E)
+  const chordRegex = /^[A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\/[A-G][b#]?)?$/;
   let chordCount = 0;
 
   for (const w of words) {
@@ -100,4 +100,50 @@ function isChordLine(line: string): boolean {
 
   // Si más del 60% de las palabras parecen acordes, confirmamos que es una línea de acordes
   return chordCount / words.length >= 0.6;
+}
+
+// Convierte formato LaCuerda (acordes en línea superior) a formato nativo (acordes inline [C])
+export function convertPlainTextToInline(lyrics: string): string {
+  const lines = lyrics.split('\n');
+  const result: string[] = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (isChordLine(line)) {
+      const chords: {chord: string, index: number}[] = [];
+      const regex = /([A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\/[A-G][b#]?)?)/g;
+      let match;
+      while ((match = regex.exec(line)) !== null) {
+        chords.push({ chord: match[1], index: match.index });
+      }
+      
+      const nextLine = (i + 1 < lines.length && !isChordLine(lines[i + 1])) ? lines[i + 1] : "";
+      
+      if (nextLine.trim() !== "") {
+        let mergedLine = nextLine;
+        const maxChordIdx = chords.length > 0 ? chords[chords.length - 1].index : 0;
+        if (mergedLine.length < maxChordIdx) {
+          mergedLine = mergedLine.padEnd(maxChordIdx, ' ');
+        }
+        
+        for (let j = chords.length - 1; j >= 0; j--) {
+          const { chord, index } = chords[j];
+          mergedLine = mergedLine.slice(0, index) + `[${chord}]` + mergedLine.slice(index);
+        }
+        result.push(mergedLine);
+        i++; // Skip next line since we merged it
+      } else {
+        let mergedLine = "";
+        let lastIdx = 0;
+        for (const { chord, index } of chords) {
+          mergedLine += " ".repeat(Math.max(0, index - lastIdx)) + `[${chord}]`;
+          lastIdx = index + chord.length;
+        }
+        result.push(mergedLine);
+      }
+    } else {
+      result.push(line);
+    }
+  }
+  return result.join('\n');
 }

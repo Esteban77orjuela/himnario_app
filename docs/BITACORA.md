@@ -3,6 +3,55 @@
 
 ---
 
+## [1.4.0] — 2026-06-19 | Fases 9 a 13: CI/CD, Cloud, Mantenimiento
+### CI/CD (Fase 9)
+- **GitHub Actions** configurado en `.github/workflows/ci.yml`.
+- En cada push a `main` corre: `npm install --legacy-peer-deps` + `npm test`.
+- Escaneo semanal de dependencias con Dependabot.
+
+### Observabilidad (Fase 11)
+- **ErrorBoundary** (`src/components/ErrorBoundary.tsx`): captura errores de renderizado en toda la app y muestra pantalla amigable con botón de reintentar.
+- Envuelve el contenido de `App.tsx` para protección global.
+
+### Cloud (Fase 10) y Escalabilidad (Fase 12)
+- Backup/restore JSON desde Ajustes (completado en iteración anterior).
+- Rendimiento: FlashList, memo, useMemo ya implementados.
+
+### Nuevas Funcionalidades
+- **Burbuja flotante de acordes**: círculo con número de acordes en la esquina derecha de la pantalla de canción. Al tocarlo, despliega la lista completa. Se actualiza automáticamente al subir/bajar de tono.
+- **`extractChords.ts`**: utilidad que extrae acordes únicos desde `parsedLines` y aplica transposición.
+
+### Mantenimiento (Fase 13)
+- Versionado semántico estable (v1.4.0).
+- ESLint configurado (`.eslintrc.js`) con TypeScript.
+- Toda la documentación en `docs/` actualizada.
+
+---
+
+## [1.3.0] — 2026-06-19 | Fase 6 y 7: Testing y Seguridad
+### Testing (Fase 6)
+- **Jest + jest-expo** configurados con 31 tests unitarios pasando.
+- **chordTransposer.test.ts** (11 tests): transposición inglés/español, sostenidos, bemoles, sufijos, envolvente de octava.
+- **lyricsParser.test.ts** (9 tests): parseo de acordes inline, detección de líneas de acordes, texto plano, conversión a inline.
+- **scraperService.test.ts** (6 tests): extracción de `<pre>`, limpieza de footer, manejo de errores HTTP y de red.
+- **Corrección de bugs**: regex de acordes prioriza nombres españoles, `transposeLine` solo transpone corchetes cuando hay brackets en la línea.
+- `jest.config.js` con `testPathIgnorePatterns` para excluir archivos sueltos.
+
+### Seguridad (Fase 7)
+- `.github/dependabot.yml`: escaneo semanal de dependencias npm con `--legacy-peer-deps`.
+- `SECURITY.md`: política de seguridad del repositorio.
+- ESLint instalado (`@typescript-eslint/parser`, `@typescript-eslint/eslint-plugin`).
+- `.gitignore` verificado: sin fugas de secretos, builds, IDE o `.env`.
+
+### Rediseño de Tema Oscuro/Claro
+- **Nuevo hook `useIsDarkMode`**: resuelve correctamente el modo `'system'` usando `useColorScheme()`.
+- **Paleta renovada**: fondos cálidos en modo claro (#F7F4F0), púrpura profundo en oscuro (#0B0815), violetas y rosas vibrantes.
+- **App.tsx**: ahora espera la hidratación de Zustand antes de renderizar (elimina flash de tema).
+- **Bug fix**: se agregó `toggleTheme` al store de Zustand que faltaba en la interfaz.
+- **Todas las pantallas** actualizadas para usar `useIsDarkMode()` en lugar de la selectora directa.
+
+---
+
 ## [1.2.0] — 2026-06-17 | Iteración 3: UX Premium
 ### Nuevas Funcionalidades
 - **Búsqueda Inteligente (Fuzzy Search):** Se integró la librería `fuse.js`. El motor de búsqueda ahora tolera errores ortográficos y busca tanto en título como en letra de las canciones.

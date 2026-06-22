@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../store/useAppStore';
+import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { FlashList } from '@shopify/flash-list';
 import { mockHymns, Hymn } from '../data/hymns';
 import { ArrowLeft, ChevronRight, Trash2 } from 'lucide-react-native';
@@ -8,7 +9,7 @@ import { MotiView } from 'moti';
 
 export default function SetlistDetailScreen({ route, navigation }: any) {
   const { setlistId, setlistName } = route.params;
-  const isDarkMode = useAppStore((state) => state.theme === 'dark');
+  const isDarkMode = useIsDarkMode();
   const customSongs = useAppStore((state) => state.customSongs);
   const categoryOverrides = useAppStore((state) => state.categoryOverrides);
   const favorites = useAppStore((state) => state.favorites);

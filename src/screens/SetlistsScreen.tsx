@@ -2,10 +2,11 @@ import { View, Text, TouchableOpacity, ScrollView, Alert, TextInput } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { Heart, ListMusic, Plus, Trash2, ChevronRight } from 'lucide-react-native';
 
 export default function SetlistsScreen({ navigation }: any) {
-  const isDarkMode = useAppStore((state) => state.theme === 'dark');
+  const isDarkMode = useIsDarkMode();
   const setlists = useAppStore((state) => state.setlists);
   const favorites = useAppStore((state) => state.favorites);
   const createSetlist = useAppStore((state) => state.createSetlist);

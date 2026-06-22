@@ -1,13 +1,14 @@
 import { View, Text, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAppStore } from '../store/useAppStore';
+import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { Moon, Sun, DownloadCloud, UploadCloud, Info, Type } from 'lucide-react-native';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
 
 export default function SettingsScreen() {
-  const isDarkMode = useAppStore((state) => state.theme === 'dark');
+  const isDarkMode = useIsDarkMode();
   const setTheme = useAppStore((state) => state.setTheme);
   const restoreBackup = useAppStore((state) => state.restoreBackup);
   const fontFamily = useAppStore((state) => state.fontFamily);

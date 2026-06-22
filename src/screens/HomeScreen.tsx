@@ -2,6 +2,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-nativ
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useState, useMemo } from 'react';
 import { useAppStore } from '../store/useAppStore';
+import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { FlashList } from '@shopify/flash-list';
 import { mockHymns, Hymn } from '../data/hymns';
 import { Search, ChevronRight, Sun, Moon, X } from 'lucide-react-native';
@@ -9,7 +10,7 @@ import { MotiView } from 'moti';
 import Fuse from 'fuse.js';
 
 export default function HomeScreen({ navigation }: any) {
-  const isDarkMode = useAppStore((state) => state.theme === 'dark');
+  const isDarkMode = useIsDarkMode();
   const toggleTheme = useAppStore((state) => state.toggleTheme);
   const customSongs = useAppStore((state) => state.customSongs);
   const categoryOverrides = useAppStore((state) => state.categoryOverrides);
@@ -20,7 +21,7 @@ export default function HomeScreen({ navigation }: any) {
 
   const filteredHymns = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    
+
     // Convertir customSongs al formato Hymn para poder listarlos juntos
     const mappedCustoms = customSongs.map((cs, idx) => ({
       id: cs.title || `custom-${idx}`,
@@ -49,6 +50,9 @@ export default function HomeScreen({ navigation }: any) {
       tabFiltered = tabFiltered.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion'));
     }
 
+    // Ordenar alfabéticamente por defecto (ignora mayúsculas/minúsculas y acentos)
+    tabFiltered.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+
     if (!q) return tabFiltered;
 
     // Luego filtramos por búsqueda usando Fuse.js para ser tolerantes a errores
@@ -74,15 +78,14 @@ export default function HomeScreen({ navigation }: any) {
       >
         <TouchableOpacity
           activeOpacity={0.8}
-          className={`flex-row items-center p-5 mb-4 mx-4 rounded-3xl border ${
-            isDarkMode 
-              ? 'bg-surface-dark border-white/5 shadow-black/20' 
+          className={`flex-row items-center p-5 mb-4 mx-4 rounded-3xl border ${isDarkMode
+              ? 'bg-surface-dark border-white/5 shadow-black/20'
               : 'bg-white border-slate-100 shadow-slate-200/50'
-          }`}
-          onPress={() => navigation.navigate('HymnDetail', { 
-            hymnId: item.id, 
-            isCustom: item.isCustom, 
-            hymn: item 
+            }`}
+          onPress={() => navigation.navigate('HymnDetail', {
+            hymnId: item.id,
+            isCustom: item.isCustom,
+            hymn: item
           })}
         >
           <View className="flex-row items-center flex-1">
@@ -126,7 +129,7 @@ export default function HomeScreen({ navigation }: any) {
               Tu biblioteca musical
             </Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={toggleTheme}
             className={`p-3 rounded-2xl ${isDarkMode ? 'bg-surface-dark' : 'bg-white'} shadow-sm`}
           >
@@ -158,15 +161,13 @@ export default function HomeScreen({ navigation }: any) {
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveTab(tab)}
-                className={`px-5 py-2 mr-3 rounded-full border ${
-                  isActive 
+                className={`px-5 py-2 mr-3 rounded-full border ${isActive
                     ? (isDarkMode ? 'bg-primary-dark border-primary-dark' : 'bg-primary border-primary')
                     : (isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200')
-                }`}
+                  }`}
               >
-                <Text className={`font-sans font-bold ${
-                  isActive ? 'text-white' : (isDarkMode ? 'text-slate-400' : 'text-slate-600')
-                }`}>
+                <Text className={`font-sans font-bold ${isActive ? 'text-white' : (isDarkMode ? 'text-slate-400' : 'text-slate-600')
+                  }`}>
                   {labels[tab]}
                 </Text>
               </TouchableOpacity>
