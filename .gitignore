@@ -16,3 +16,4 @@ veda
 *.env
 *.env.*
 !.env.example
+coverage/
