@@ -15,6 +15,7 @@ export default function HomeScreen({ navigation }: any) {
   const customSongs = useAppStore((state) => state.customSongs);
   const categoryOverrides = useAppStore((state) => state.categoryOverrides);
   const favorites = useAppStore((state) => state.favorites);
+  const songPlayCount = useAppStore((state) => state.songPlayCount);
   useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
@@ -48,10 +49,13 @@ export default function HomeScreen({ navigation }: any) {
       tabFiltered = tabFiltered.filter(h => h.category.toLowerCase().includes('alabanza'));
     } else if (activeTab === 'adoracion') {
       tabFiltered = tabFiltered.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion'));
+    } else if (activeTab === 'populares') {
+      tabFiltered.sort((a, b) => (songPlayCount[b.id] || 0) - (songPlayCount[a.id] || 0));
     }
 
-    // Ordenar alfabéticamente por defecto (ignora mayúsculas/minúsculas y acentos)
-    tabFiltered.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+    if (activeTab !== 'populares') {
+      tabFiltered.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+    }
 
     if (!q) return tabFiltered;
 
@@ -111,6 +115,13 @@ export default function HomeScreen({ navigation }: any) {
               </Text>
             </View>
           </View>
+          {activeTab === 'populares' && songPlayCount[item.id] > 0 && (
+            <View className={`mr-2 px-2.5 py-1 rounded-full ${isDarkMode ? 'bg-accent-dark/20' : 'bg-accent/10'}`}>
+              <Text className={`text-xs font-bold ${isDarkMode ? 'text-accent-dark' : 'text-accent'}`}>
+                {songPlayCount[item.id]}
+              </Text>
+            </View>
+          )}
           <ChevronRight color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={24} />
         </TouchableOpacity>
       </MotiView>
@@ -154,8 +165,8 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
-          {['all', 'favorites', 'alabanza', 'adoracion'].map((tab) => {
-            const labels: any = { all: 'Todos', favorites: 'Favoritos', alabanza: 'Alabanza', adoracion: 'Adoración' };
+          {['all', 'favorites', 'populares', 'alabanza', 'adoracion'].map((tab) => {
+            const labels: any = { all: 'Todos', favorites: 'Favoritos', populares: 'Populares', alabanza: 'Alabanza', adoracion: 'Adoración' };
             const isActive = activeTab === tab;
             return (
               <TouchableOpacity

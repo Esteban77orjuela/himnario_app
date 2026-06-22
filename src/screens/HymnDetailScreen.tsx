@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { PinchGestureHandler, State } from 'react-native-gesture-handler';
@@ -29,6 +29,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const setCategoryOverride = useAppStore((state) => state.setCategoryOverride);
   const setlists = useAppStore((state) => state.setlists);
   const addHymnToSetlist = useAppStore((state) => state.addHymnToSetlist);
+  const incrementPlayCount = useAppStore((state) => state.incrementPlayCount);
 
   const [showSetlistModal, setShowSetlistModal] = useState(false);
   const [isImmersiveMode, setIsImmersiveMode] = useState(false);
@@ -36,6 +37,10 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const [selectedChord, setSelectedChord] = useState<string | null>(null);
   const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const [showChordsList, setShowChordsList] = useState(false);
+  const songNotes = useAppStore((state) => state.songNotes);
+  const setSongNote = useAppStore((state) => state.setSongNote);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [noteText, setNoteText] = useState('');
 
 
   // --- PINCH-TO-ZOOM ---
@@ -105,6 +110,8 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const currentBpm = songBPMs[hymnIdKey] || 120;
   const [_flash, setFlash] = useState(false);
   const metronomeInterval = useRef<NodeJS.Timeout>(undefined as unknown as NodeJS.Timeout);
+
+  useEffect(() => { incrementPlayCount(hymnIdKey); }, []);
 
   useEffect(() => {
     if (isMetronomeActive) {
@@ -302,6 +309,18 @@ export default function HymnDetailScreen({ route, navigation }: any) {
               >
                 <View className="w-8"><ListPlus color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={20} /></View>
                 <Text className={`font-medium ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Añadir a Repertorio</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                className={`p-4 flex-row items-center border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}
+                onPress={() => {
+                  setShowOptionsMenu(false);
+                  setNoteText(songNotes[hymnIdKey] || '');
+                  setShowNotesModal(true);
+                }}
+              >
+                <View className="w-8"><Edit2 color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={20} /></View>
+                <Text className={`font-medium ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>Notas</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
@@ -565,6 +584,41 @@ export default function HymnDetailScreen({ route, navigation }: any) {
           <View className={`p-8 rounded-3xl ${isDarkMode ? 'bg-surface-dark' : 'bg-white'}`} style={{ width: 220, alignItems: 'center' }}>
             {selectedChord && <ChordDiagram chordName={selectedChord} />}
           </View>
+        </TouchableOpacity>
+      </Modal>
+
+      <Modal visible={showNotesModal} transparent animationType="fade" onRequestClose={() => setShowNotesModal(false)}>
+        <TouchableOpacity className="flex-1 bg-black/50 justify-center items-center" activeOpacity={1} onPress={() => setShowNotesModal(false)}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}} className={`w-5/6 max-w-md rounded-3xl p-6 ${isDarkMode ? 'bg-surface-dark' : 'bg-white'}`}>
+            <Text className={`font-bold text-lg mb-4 ${isDarkMode ? 'text-white' : 'text-slate-900'}`}>
+              Notas — {hymn.title}
+            </Text>
+            <TextInput
+              multiline
+              placeholder="Escribe tus notas aquí..."
+              placeholderTextColor={isDarkMode ? '#64748B' : '#9CA3AF'}
+              value={noteText}
+              onChangeText={setNoteText}
+              className={`min-h-[160px] p-4 rounded-2xl text-base leading-relaxed ${isDarkMode ? 'bg-background-dark text-white' : 'bg-gray-50 text-slate-900'}`}
+            />
+            <View className="flex-row justify-end mt-4 gap-x-3">
+              <TouchableOpacity
+                onPress={() => setShowNotesModal(false)}
+                className={`px-5 py-3 rounded-xl ${isDarkMode ? 'bg-background-dark' : 'bg-gray-100'}`}
+              >
+                <Text className={`font-semibold ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setSongNote(hymnIdKey, noteText);
+                  setShowNotesModal(false);
+                }}
+                className={`px-5 py-3 rounded-xl ${isDarkMode ? 'bg-primary-dark' : 'bg-primary'}`}
+              >
+                <Text className="font-semibold text-white">Guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 

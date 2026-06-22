@@ -3,6 +3,33 @@
 
 ---
 
+## [1.6.0] — 2026-06-22 | Iteraciones 4-7: Acordes, Proyector, Notas, Estadísticas
+### Iteración 4 — Diccionario de Acordes
+- **Expansión masiva**: 50+ diagramas de guitarra con posiciones de cejilla (todos los tonos naturales + sostenidos/bemoles + 7ª, maj7, m7).
+- **Piano automático**: `generatePianoNotes()` genera teclas iluminadas para cualquier acorde (7ª, m7, sus4, dim, aug, dim7, m7b5) desde teoría musical — sin diagrama manual requerido.
+- **Fallback inteligente**: Si no hay diagrama de guitarra, muestra solo el teclado de piano con las teclas correctas presionadas.
+- **14 tests nuevos** para `chordDiagrams.test.ts`.
+
+### Iteración 5 — Modo Presentación / Proyector
+- Botón Monitor en HymnDetailScreen: fondo negro, letra blanca, fuente 1.8x, sin acordes.
+- Ideal para proyectar en pantalla grande durante el culto.
+
+### Iteración 6 — Notas Privadas por Canción
+- Nuevo campo `songNotes: Record<string, string>` en el store de Zustand.
+- Modal de edición de texto multilínea accesible desde el menú "Opciones" → "Notas".
+- Persistencia automática con AsyncStorage + incluido en backup/restore.
+
+### Iteración 7 — Estadísticas de Uso
+- `incrementPlayCount()` se dispara al abrir cualquier canción.
+- Nueva pestaña **"Populares"** en HomeScreen: ordena canciones por número de reproducciones.
+- Badge con el conteo visible en cada tarjeta dentro de la pestaña Populares.
+
+### Testing
+- **45 tests unitarios** pasando (14 nuevos de chordDiagrams).
+- **0 errores TypeScript**, **0 warnings ESLint**.
+
+---
+
 ## [1.5.0] — 2026-06-22 | Fase 4 (Pre-commit), Documentación Técnica, Mejora CI/CD
 ### Pre-commit Hooks (Fase 4)
 - **Husky + lint-staged**: `pre-commit` ejecuta `npx lint-staged` (eslint + tests) sobre archivos staged.

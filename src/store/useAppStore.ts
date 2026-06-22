@@ -17,6 +17,8 @@ interface AppState {
   customSongs: ScrapedSong[];
   categoryOverrides: Record<string, string>;
   songBPMs: Record<string, number>;
+  songNotes: Record<string, string>;
+  songPlayCount: Record<string, number>;
   setlists: Setlist[];
   
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -28,6 +30,8 @@ interface AppState {
   updateCustomSongCategory: (title: string, category: string) => void;
   setCategoryOverride: (id: string, category: string) => void;
   setSongBPM: (id: string, bpm: number) => void;
+  setSongNote: (id: string, note: string) => void;
+  incrementPlayCount: (id: string) => void;
   toggleFavorite: (hymnId: string) => void;
   
   createSetlist: (name: string) => void;
@@ -47,6 +51,8 @@ export const useAppStore = create<AppState>()(
       customSongs: [],
       categoryOverrides: {},
       songBPMs: {},
+      songNotes: {},
+      songPlayCount: {},
       setlists: [],
       
       setTheme: (theme) => set({ theme }),
@@ -62,6 +68,14 @@ export const useAppStore = create<AppState>()(
       setSongBPM: (id, bpm) =>
         set((state) => ({
           songBPMs: { ...state.songBPMs, [id]: bpm }
+        })),
+      setSongNote: (id, note) =>
+        set((state) => ({
+          songNotes: { ...state.songNotes, [id]: note }
+        })),
+      incrementPlayCount: (id) =>
+        set((state) => ({
+          songPlayCount: { ...state.songPlayCount, [id]: (state.songPlayCount[id] || 0) + 1 }
         })),
       toggleFavorite: (hymnId) =>
         set((state) => ({
@@ -124,6 +138,8 @@ export const useAppStore = create<AppState>()(
           setlists: data.setlists || state.setlists,
           categoryOverrides: data.categoryOverrides || state.categoryOverrides,
           songBPMs: data.songBPMs || state.songBPMs,
+          songNotes: data.songNotes || state.songNotes,
+          songPlayCount: data.songPlayCount || state.songPlayCount,
         })),
     }),
     {
