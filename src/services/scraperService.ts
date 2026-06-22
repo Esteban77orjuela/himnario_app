@@ -99,7 +99,7 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
         error: 'No se encontró la estructura de acordes en esta página.'
       };
     }
-  } catch (error) {
+  } catch (_error) {
     return {
       success: false,
       error: 'Error de red. Revisa tu conexión a internet.'

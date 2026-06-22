@@ -144,7 +144,7 @@ export default function SetlistDetailScreen({ route, navigation }: any) {
         <FlashList
           data={listHymns}
           renderItem={renderItem}
-          // @ts-ignore
+          // @ts-expect-error FlashList legacy prop
           estimatedItemSize={100}
           contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}

@@ -4,6 +4,7 @@ export interface Hymn {
   title: string;
   category: string;
   lyrics: string;
+  isCustom?: boolean;
 }
 
 export const mockHymns: Hymn[] = [

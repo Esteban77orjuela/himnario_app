@@ -15,7 +15,7 @@ export default function HomeScreen({ navigation }: any) {
   const customSongs = useAppStore((state) => state.customSongs);
   const categoryOverrides = useAppStore((state) => state.categoryOverrides);
   const favorites = useAppStore((state) => state.favorites);
-  const insets = useSafeAreaInsets();
+  useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('all');
 
@@ -179,7 +179,7 @@ export default function HomeScreen({ navigation }: any) {
       <FlashList
         data={filteredHymns}
         renderItem={renderItem}
-        // @ts-ignore
+        // @ts-expect-error FlashList legacy prop
         estimatedItemSize={100}
         contentContainerStyle={{ paddingBottom: 120 }} // Space for BottomTabBar
         showsVerticalScrollIndicator={false}

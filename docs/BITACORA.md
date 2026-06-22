@@ -3,6 +3,29 @@
 
 ---
 
+## [1.5.0] — 2026-06-22 | Fase 4 (Pre-commit), Documentación Técnica, Mejora CI/CD
+### Pre-commit Hooks (Fase 4)
+- **Husky + lint-staged**: `pre-commit` ejecuta `npx lint-staged` (eslint + tests) sobre archivos staged.
+- `.husky/pre-commit`: hook configurado y funcional.
+- `.husky/.gitignore`: excluye directorio `_` interno.
+
+### Documentación Técnica
+- `docs/ADR-001.md`: Architecture Decision Record — documenta decisiones clave (monolito, Zustand, NativeWind v2, scraper, transposición).
+- `docs/SCHEMA.md`: Esquema de AsyncStorage con interfaces TypeScript completas (AppState, ScrapedSong, Setlist).
+
+### CI/CD (Fase 9 — mejora)
+- `.github/workflows/ci.yml` ahora ejecuta: TypeScript check (`tsc --noEmit`), ESLint, tests, y `npm audit`.
+- Cache de npm para acelerar ejecuciones.
+- Corre en PRs además de push a main.
+
+### TypeScript & Linting
+- **Fix TypeScript errors (6)**: agregado `isCustom?: boolean` a interfaz `Hymn`, argumentos iniciales para `useRef`.
+- **Migración ESLint a flat config**: `.eslintrc.js` → `eslint.config.js` (ESLint v10 compatible).
+- **0 errores, 0 warnings** en ESLint (con varsIgnorePattern + caughtErrors).
+- **TypeScript check (`tsc --noEmit`)**: 0 errores.
+
+---
+
 ## [1.4.0] — 2026-06-19 | Fases 9 a 13: CI/CD, Cloud, Mantenimiento
 ### CI/CD (Fase 9)
 - **GitHub Actions** configurado en `.github/workflows/ci.yml`.

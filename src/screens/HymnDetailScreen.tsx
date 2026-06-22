@@ -1,5 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Modal } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 import { useAppStore } from '../store/useAppStore';
@@ -56,7 +56,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
 
   const viewRef = useRef(null);
   const pinchRef = useRef(null);
-  const [isCapturing, setIsCapturing] = useState(false);
+  const [_isCapturing, setIsCapturing] = useState(false);
   const baseHymn = isCustom ? (customSongs.find(s => s.title === customHymn.title) || customHymn) : mockHymns.find(h => h.id === hymnId);
   const hymnIdKey = isCustom ? baseHymn.title : baseHymn.id;
   const hymn = { ...baseHymn, category: categoryOverrides[hymnIdKey] || baseHymn.category };
@@ -75,7 +75,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const scrollRef = useRef<ScrollView>(null);
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const scrollY = useRef(0);
-  const autoScrollFrame = useRef<number>();
+  const autoScrollFrame = useRef<number>(0);
 
   useEffect(() => {
     if (isAutoScrolling) {
@@ -93,7 +93,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
     };
   }, [isAutoScrolling]);
 
-  const handleScroll = (event: any) => {
+  const _handleScroll = (event: any) => {
     scrollY.current = event.nativeEvent.contentOffset.y;
   };
 
@@ -103,8 +103,8 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const [isMetronomeActive, setIsMetronomeActive] = useState(false);
   const [showMetronomeControls, setShowMetronomeControls] = useState(false);
   const currentBpm = songBPMs[hymnIdKey] || 120;
-  const [flash, setFlash] = useState(false);
-  const metronomeInterval = useRef<NodeJS.Timeout>();
+  const [_flash, setFlash] = useState(false);
+  const metronomeInterval = useRef<NodeJS.Timeout>(undefined as unknown as NodeJS.Timeout);
 
   useEffect(() => {
     if (isMetronomeActive) {

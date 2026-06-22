@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test": "jest --passWithNoTests"
+    "test": "jest --passWithNoTests",
+    "prepare": "husky"
   },
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -39,14 +40,22 @@
     "react-native-worklets": "0.5.1",
     "zustand": "^5.0.3"
   },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "npx eslint --fix",
+      "npx jest --passWithNoTests --findRelatedTests --bail"
+    ]
+  },
   "devDependencies": {
     "@types/jest": "^29.5.14",
     "@types/react": "~19.1.10",
     "@typescript-eslint/eslint-plugin": "^8.61.1",
     "@typescript-eslint/parser": "^8.61.1",
     "eslint": "^10.5.0",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-expo": "~54.0.0",
+    "lint-staged": "^16.4.0",
     "tailwindcss": "^3.3.2",
     "typescript": "~5.9.2"
   },
