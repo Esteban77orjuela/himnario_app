@@ -43,7 +43,7 @@
   "lint-staged": {
     "*.{ts,tsx}": [
       "npx eslint --fix",
-      "npx jest --passWithNoTests --findRelatedTests --bail"
+      "npx jest --passWithNoTests --findRelatedTests --bail --no-coverage"
     ]
   },
   "devDependencies": {

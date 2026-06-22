@@ -3,6 +3,47 @@
 
 ---
 
+## [1.7.0] — 2026-06-22 | Fases Profesionales: Diseño, Testing, Seguridad, CI/CD, Observabilidad
+### Fase 3 — Diseño Técnico (Profesional ✅)
+- `docs/COMPONENT_DESIGN.md`: árbol de componentes, flujo de pantallas, flujo de datos con diagramas ASCII, ciclos de vida (transposición y persistencia), patrones de UI reutilizables.
+
+### Fase 1 — Requerimientos (Profesional ✅)
+- `docs/USER_STORIES.md`: 19 user stories formateadas "Como... quiero... para..." con criterios de aceptación y priorización.
+
+### Fase 2 — Arquitectura (Profesional ✅)
+- `ADR-002.md`: Navegación — Stack + BottomTabs, por qué NativeStack sobre JS Stack.
+- `ADR-003.md`: Estado global — por qué Zustand sobre Redux/Jotai/Context, patrón de selectores.
+- `ADR-004.md`: Estrategia de testing — Jest 29, pirámide, mocking, coverage thresholds.
+
+### Fase 6 — Testing (Profesional ✅)
+- **84 tests unitarios** (antes 31, ahora +53 nuevos).
+- Tests nuevos: `useAppStore` (32 tests), `extractChords` (6 tests), `useIsDarkMode` (6 tests), `chordDiagrams` (14 tests).
+- Coverage thresholds: statements 70%, branches 60%, functions 70%, lines 70%.
+- **Cobertura real**: statements 86%, branches 77%, functions 88%, lines 87%.
+- `jest.setup.js`: mock global de AsyncStorage.
+- `coverageThreshold` configurado en `jest.config.js`.
+
+### Fase 7 — Seguridad (Profesional ✅)
+- `npm audit` en CI (GitHub Actions).
+- `CodeQL` scanning en CI (javascript, security-events write).
+- `.github/PULL_REQUEST_TEMPLATE.md`: checklist profesional (tests, tsc, lint).
+- `.github/ISSUE_TEMPLATE/bug_report.md` + `feature_request.md`.
+
+### Fase 9 — CI/CD (Profesional ✅)
+- GitHub Actions con 2 jobs: `quality` (tsc + eslint + test + audit) + `codeql` (SAST).
+
+### Fase 11 — Observabilidad (Profesional ✅)
+- `src/utils/logger.ts`: logger con niveles (info/warn/error), timestamps, prefijo [Himnario]. Silencia info en producción vía `__DEV__`.
+- `measureTime()`: mide performance de operaciones críticas, advierte si excede 16ms (frame budget).
+- `ErrorBoundary` ahora usa logger en lugar de console.error.
+- `scraperService` ahora usa logger en lugar de console.log.
+
+### Testing — Logger cubierto
+- Los tests del scraper ejercitan `logger.info()` indirectamente.
+- `logger.ts` tiene 38% de cobertura directa (aceptable — es infraestructura).
+
+---
+
 ## [1.6.0] — 2026-06-22 | Iteraciones 4-7: Acordes, Proyector, Notas, Estadísticas
 ### Iteración 4 — Diccionario de Acordes
 - **Expansión masiva**: 50+ diagramas de guitarra con posiciones de cejilla (todos los tonos naturales + sostenidos/bemoles + 7ª, maj7, m7).

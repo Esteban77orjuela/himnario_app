@@ -4,6 +4,8 @@
  * Utiliza fetch nativo (que funciona 100% offline después de guardado) para leer páginas web.
  */
 
+import { logger } from '../utils/logger';
+
 export interface ScrapedSong {
   success: boolean;
   title?: string;
@@ -32,13 +34,7 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
 
     const html = await response.text();
 
-    // DEBUGGING AVANZADO: Imprimir en la consola qué nos está respondiendo realmente LaCuerda
-    console.log("=== DEBUG SCRAPER ===");
-    console.log("Status HTTP:", response.status);
-    console.log("Primeros 500 caracteres del HTML:", html.substring(0, 500));
-    console.log("Contiene <pre>?", html.toLowerCase().includes('<pre>'));
-    console.log("Contiene t_body?", html.includes('t_body'));
-    console.log("=====================");
+    logger.info('Scraper response', { status: response.status, hasPre: html.toLowerCase().includes('<pre>'), preview: html.substring(0, 100) });
 
     // IDEA PARTICULAR: LaCuerda inserta un <pre id='tCode'></pre> VACÍO antes del <PRE> real
     // para engañar a los bots. Para vencer esto, buscamos TODOS los bloques <pre> de la página
