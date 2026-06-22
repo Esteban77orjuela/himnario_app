@@ -3,6 +3,18 @@
 
 ---
 
+## [1.8.0] — 2026-06-22 | Rediseño HomeScreen: Botones de filtro visuales
+### HomeScreen — Nuevo diseño
+- **Reemplazo de tabs horizontales** por **3 botones grandes**: Adoración, Alabanza, Favoritos.
+- Cada botón tiene icono distintivo (Cross, Music2, Heart), color propio (violeta, rosa, rojo), y badge con conteo.
+- Animación spring al activar (MotiView scale 1.1x).
+- Fondo activo con color sólido + icono blanco; inactivo con fondo translúcido.
+- Al seleccionar un filtro, aparece indicador "Mostrando: X" con botón X para limpiar.
+- Tocar el mismo filtro lo desactiva (vuelve a "Todos").
+- Se eliminó `songPlayCount` del HomeScreen (ya no se necesita sin pestaña Populares).
+
+---
+
 ## [1.7.0] — 2026-06-22 | Fases Profesionales: Diseño, Testing, Seguridad, CI/CD, Observabilidad
 ### Fase 3 — Diseño Técnico (Profesional ✅)
 - `docs/COMPONENT_DESIGN.md`: árbol de componentes, flujo de pantallas, flujo de datos con diagramas ASCII, ciclos de vida (transposición y persistencia), patrones de UI reutilizables.
