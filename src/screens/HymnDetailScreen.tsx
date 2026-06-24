@@ -1,11 +1,11 @@
-import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Modal, TextInput } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Pressable, Alert, Modal, TextInput, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 import { useAppStore } from '../store/useAppStore';
 import { useIsDarkMode } from '../utils/useIsDarkMode';
-import { mockHymns } from '../data/hymns';
-import { ArrowLeft, Heart, Minus, Plus, ZoomIn, ZoomOut, Share, Edit2, Play, Pause, Activity, ListPlus, X, Monitor, Trash2, MoreVertical } from 'lucide-react-native';
+import { mockHymns, christianSongs } from '../data/hymns';
+import { ArrowLeft, Heart, Minus, Plus, ZoomIn, ZoomOut, Share, Edit2, Play, Pause, Activity, ListPlus, X, Monitor, Trash2, MoreVertical, Youtube } from 'lucide-react-native';
 import { parseLyricsToWords, convertPlainTextToInline } from '../utils/lyricsParser';
 import { transposeChord } from '../utils/chordTransposer';
 import { extractUniqueChords } from '../utils/extractChords';
@@ -43,18 +43,17 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const [noteText, setNoteText] = useState('');
 
 
-  // --- PINCH-TO-ZOOM ---
+  // --- PINCH-TO-ZOOM (sin inercia) ---
   const baseFontSize = useRef(fontSize);
   const onPinchGestureEvent = useCallback((event: any) => {
-    const scale = event.nativeEvent.scale;
-    const newSize = Math.round(Math.min(40, Math.max(12, baseFontSize.current * scale)));
+    const newSize = Math.round(Math.min(40, Math.max(12, baseFontSize.current * event.nativeEvent.scale)));
     setFontSize(newSize);
   }, [setFontSize]);
   const onPinchHandlerStateChange = useCallback((event: any) => {
-    if (event.nativeEvent.oldState === State.ACTIVE) {
+    if (event.nativeEvent.state === State.BEGAN) {
       baseFontSize.current = fontSize;
     }
-    if (event.nativeEvent.state === State.BEGAN) {
+    if (event.nativeEvent.state === State.END || event.nativeEvent.state === State.CANCELLED) {
       baseFontSize.current = fontSize;
     }
   }, [fontSize]);
@@ -62,7 +61,9 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const viewRef = useRef(null);
   const pinchRef = useRef(null);
   const [_isCapturing, setIsCapturing] = useState(false);
-  const baseHymn = isCustom ? (customSongs.find(s => s.title === customHymn.title) || customHymn) : mockHymns.find(h => h.id === hymnId);
+  const baseHymn = isCustom
+    ? (customSongs.find(s => s.title === customHymn.title) || customHymn)
+    : (mockHymns.find(h => h.id === hymnId) || christianSongs.find(s => s.id === hymnId) || customHymn);
   const hymnIdKey = isCustom ? baseHymn.title : baseHymn.id;
   const hymn = { ...baseHymn, category: categoryOverrides[hymnIdKey] || baseHymn.category };
 
@@ -193,6 +194,14 @@ export default function HymnDetailScreen({ route, navigation }: any) {
     }
   };
 
+  const handleOpenYouTube = useCallback(() => {
+    const query = encodeURIComponent(`${hymn.title} himno`);
+    const url = `https://www.youtube.com/results?search_query=${query}`;
+    Linking.openURL(url).catch(() => {
+      Alert.alert('Error', 'No se pudo abrir YouTube. Revisa tu conexión.');
+    });
+  }, [hymn]);
+
   if (!hymn) {
     return (
       <View className={`flex-1 justify-center items-center ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
@@ -257,7 +266,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
                 className={`p-4 flex-row items-center border-b ${isDarkMode ? 'border-slate-800' : 'border-slate-100'}`}
                 onPress={() => {
                   setShowOptionsMenu(false);
-                  toggleFavorite(hymnId);
+                  toggleFavorite(hymnIdKey);
                 }}
               >
                 <View className="w-8">
@@ -403,13 +412,17 @@ export default function HymnDetailScreen({ route, navigation }: any) {
                 }}
                 className="mb-8"
               >
-                <View className="flex-row items-center justify-between">
-                  <Text className={`text-3xl font-bold font-serif flex-1 ${isDarkMode ? 'text-white' : 'text-black'}`}>
+                <View>
+                  <Text className={`text-3xl font-bold font-serif ${isDarkMode ? 'text-white' : 'text-black'}`}>
                     {hymn.title}
                   </Text>
-                  {!isCustom && <Text className={`text-xl font-bold ${isDarkMode ? 'text-primary-dark' : 'text-primary'}`}>{hymnId}</Text>}
                 </View>
-                <View className="flex-row items-center mb-3">
+                {hymn.artist ? (
+                  <Text className={`font-sans text-sm mt-1 mb-2 ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {hymn.artist}
+                  </Text>
+                ) : null}
+                <View className="flex-row items-center">
                   {!isCustom && (
                     <>
                       <View className={`px-3 py-1 rounded-full ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/10'}`}>
@@ -495,6 +508,57 @@ export default function HymnDetailScreen({ route, navigation }: any) {
               </MotiView>
             </View>
           </Pressable>
+
+          {/* YouTube card */}
+          {!effectiveIsImmersive && (
+          <MotiView
+            from={{ opacity: 0, translateY: 30 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            transition={{ type: 'spring', damping: 18, delay: 300 }}
+            className="mx-4 mb-6"
+          >
+            <TouchableOpacity
+              activeOpacity={0.85}
+              onPress={handleOpenYouTube}
+              className={`rounded-3xl overflow-hidden border ${isDarkMode ? 'border-red-900/40' : 'border-red-200/60'}`}
+              style={{
+                shadowColor: '#FF0000',
+                shadowOpacity: isDarkMode ? 0.3 : 0.15,
+                shadowRadius: 12,
+                shadowOffset: { width: 0, height: 4 },
+                elevation: 8,
+              }}
+            >
+              <View className="flex-row items-center px-5 py-4"
+                style={{
+                  backgroundColor: isDarkMode ? 'rgba(127, 29, 29, 0.25)' : 'rgba(254, 242, 242, 0.9)',
+                }}
+              >
+                <View className="w-12 h-12 rounded-full items-center justify-center mr-4"
+                  style={{
+                    backgroundColor: '#FF0000',
+                    shadowColor: '#FF0000',
+                    shadowOpacity: 0.5,
+                    shadowRadius: 8,
+                    shadowOffset: { width: 0, height: 2 },
+                    elevation: 6,
+                  }}
+                >
+                  <Youtube color="#FFFFFF" size={22} fill="#FFFFFF" />
+                </View>
+                <View className="flex-1">
+                  <Text className={`font-sans font-bold text-base ${isDarkMode ? 'text-red-200' : 'text-red-800'}`}>
+                    Escuchar en YouTube
+                  </Text>
+                  <Text className={`font-sans text-xs mt-0.5 ${isDarkMode ? 'text-red-300/70' : 'text-red-600/70'}`} numberOfLines={1}>
+                    {hymn.title}
+                  </Text>
+                </View>
+                <Play color="#FF0000" size={20} fill="#FF0000" />
+              </View>
+            </TouchableOpacity>
+          </MotiView>
+          )}
         </ScrollView>
       </PinchGestureHandler>
 

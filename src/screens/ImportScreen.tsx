@@ -43,7 +43,8 @@ export default function ImportScreen({ navigation }: any) {
           { 
             text: 'Ver Canción', 
             onPress: () => navigation.navigate('HymnDetail', { 
-              hymn: { id: result.title, title: result.title, lyrics: result.lyrics, category: songWithCategory.category }, 
+              hymnId: result.title,
+              hymn: { id: result.title, title: result.title, artist: result.artist, lyrics: result.lyrics, category: songWithCategory.category }, 
               isCustom: true 
             }) 
           },

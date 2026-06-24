@@ -22,16 +22,23 @@ export default function SettingsScreen() {
     try {
       const state = useAppStore.getState();
       const backupData = {
+        backupVersion: 1,
         customSongs: state.customSongs,
         favorites: state.favorites,
         setlists: state.setlists,
         categoryOverrides: state.categoryOverrides,
         songBPMs: state.songBPMs,
+        songNotes: state.songNotes,
+        songPlayCount: state.songPlayCount,
+        songKeys: state.songKeys,
+        theme: state.theme,
+        fontFamily: state.fontFamily,
+        fontSize: state.fontSize,
         timestamp: new Date().toISOString(),
       };
 
       const fileUri = FileSystem.documentDirectory + 'himnario_backup.json';
-      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(backupData));
+      await FileSystem.writeAsStringAsync(fileUri, JSON.stringify(backupData, null, 2));
       
       const isAvailable = await Sharing.isAvailableAsync();
       if (isAvailable) {
@@ -61,7 +68,18 @@ export default function SettingsScreen() {
       const fileContent = await FileSystem.readAsStringAsync(fileUri);
       const backupData = JSON.parse(fileContent);
 
-      if (backupData.customSongs || backupData.favorites || backupData.setlists) {
+      const hasValidBackupShape =
+        backupData.customSongs ||
+        backupData.favorites ||
+        backupData.setlists ||
+        backupData.songNotes ||
+        backupData.songPlayCount ||
+        backupData.songKeys ||
+        backupData.theme ||
+        backupData.fontFamily ||
+        backupData.fontSize;
+
+      if (hasValidBackupShape) {
         restoreBackup(backupData);
         Alert.alert('¡Éxito!', 'Copia de seguridad restaurada correctamente');
       } else {

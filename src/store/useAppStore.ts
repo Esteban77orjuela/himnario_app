@@ -19,6 +19,7 @@ interface AppState {
   songBPMs: Record<string, number>;
   songNotes: Record<string, string>;
   songPlayCount: Record<string, number>;
+  songKeys: Record<string, string>;
   setlists: Setlist[];
   
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -32,6 +33,7 @@ interface AppState {
   setSongBPM: (id: string, bpm: number) => void;
   setSongNote: (id: string, note: string) => void;
   incrementPlayCount: (id: string) => void;
+  setSongKey: (id: string, key: string) => void;
   toggleFavorite: (hymnId: string) => void;
   
   createSetlist: (name: string) => void;
@@ -53,6 +55,7 @@ export const useAppStore = create<AppState>()(
       songBPMs: {},
       songNotes: {},
       songPlayCount: {},
+      songKeys: {},
       setlists: [],
       
       setTheme: (theme) => set({ theme }),
@@ -76,6 +79,10 @@ export const useAppStore = create<AppState>()(
       incrementPlayCount: (id) =>
         set((state) => ({
           songPlayCount: { ...state.songPlayCount, [id]: (state.songPlayCount[id] || 0) + 1 }
+        })),
+      setSongKey: (id, key) =>
+        set((state) => ({
+          songKeys: { ...state.songKeys, [id]: key },
         })),
       toggleFavorite: (hymnId) =>
         set((state) => ({
@@ -140,6 +147,7 @@ export const useAppStore = create<AppState>()(
           songBPMs: data.songBPMs || state.songBPMs,
           songNotes: data.songNotes || state.songNotes,
           songPlayCount: data.songPlayCount || state.songPlayCount,
+          songKeys: data.songKeys || state.songKeys,
         })),
     }),
     {

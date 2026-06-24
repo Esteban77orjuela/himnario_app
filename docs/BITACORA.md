@@ -3,6 +3,54 @@
 
 ---
 
+## [1.8.2] — 2026-06-22 | README público, corrección de favoritos importados y backup completo
+### Repositorio público
+- Se creó `README.md` en la raíz con descripción del producto, stack, instalación, scripts, estructura y estado técnico real del proyecto.
+
+### Corrección funcional
+- `src/screens/ImportScreen.tsx`: la navegación al detalle tras importar ahora también envía `hymnId`.
+- `src/screens/HymnDetailScreen.tsx`: favoritos ahora usan `hymnIdKey`, corrigiendo el caso de canciones importadas/personalizadas.
+
+### Backup y restore
+- `src/screens/SettingsScreen.tsx`: la exportación ahora incluye `songNotes`, `songPlayCount`, `theme`, `fontFamily` y `fontSize`, además de los campos ya existentes.
+- Se agregó `backupVersion` al archivo exportado.
+- El JSON de backup ahora se genera con formato legible.
+- La validación de importación reconoce correctamente backups que contienen preferencias y estado adicional.
+
+### Sincronización documental
+- `package.json`, `app.json` y `docs/PROJECT_CHARTER.md` se alinearon a la versión `1.8.2`.
+
+---
+
+## [1.8.1] — 2026-06-22 | Auditoría profesional, plan maestro y limpieza para publicación
+### Auditoría profesional
+- Se creó `docs/EVALUACION_PROFESIONAL_2026-06-22.md` con revisión completa del proyecto frente a las fases 0-13 del SDLC.
+- La conclusión quedó documentada con matices: base profesional real, pero aún no nivel arquitectónico cerrado ni madurez completa en todas las fases.
+
+### Plan de continuidad
+- Se creó `docs/PLAN_DESARROLLO_PROFESIONAL.md` como guía interna de trabajo iterativo, definición de terminado y prioridades inmediatas.
+
+### Hallazgos críticos documentados
+- Se identificó deriva documental entre código y documentos (`ROADMAP`, `ADR-004`, versiones).
+- Se identificó riesgo funcional en favoritos de canciones importadas al navegar desde `ImportScreen`.
+- Se identificó backup incompleto: la exportación no incluye todo el estado persistido relevante.
+- Se identificó tipado incompleto en varias pantallas y navegación.
+
+### Higiene para publicación pública
+- Se eliminó `Chat.md` del proyecto y se agregó a `.gitignore` para evitar que vuelva a aparecer como artefacto público.
+
+### Verificación técnica manual
+- `npm test`: **84 tests pasaron**.
+- `npx tsc --noEmit`: **sin errores**.
+- `npx eslint src/ --max-warnings 10`: **sin errores ni warnings bloqueantes**.
+- `npm audit --audit-level=high`: se detectaron vulnerabilidades transitivas, con 1 hallazgo de severidad alta en `undici` y varios moderados en dependencias del ecosistema de testing y Expo.
+- Se confirmó que el proyecto está estable a nivel de calidad estática y testing, pero requiere una estrategia cuidadosa de actualización de dependencias antes de publicar o endurecer seguridad.
+- `npm audit fix --legacy-peer-deps`: corrigió parte del árbol y eliminó el hallazgo de severidad alta asociado a `undici`.
+- Estado posterior del audit: permanecen vulnerabilidades **moderadas** y **transitivas** en cadenas relacionadas con `jest-expo`, `expo`, `postcss`, `uuid` y tooling interno, cuya corrección automática exige upgrades mayores (`npm audit fix --force`).
+- Conclusión actual: el proyecto quedó sin hallazgos altos reportados por `npm audit --audit-level=high`, pero aún no conviene aplicar `--force` sin plan de actualización controlada de Expo y testing.
+
+---
+
 ## [1.8.0] — 2026-06-22 | Rediseño HomeScreen: Botones de filtro visuales
 ### HomeScreen — Nuevo diseño
 - **Reemplazo de tabs horizontales** por **3 botones grandes**: Adoración, Alabanza, Favoritos.

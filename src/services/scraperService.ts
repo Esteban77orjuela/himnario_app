@@ -9,6 +9,7 @@ import { logger } from '../utils/logger';
 export interface ScrapedSong {
   success: boolean;
   title?: string;
+  artist?: string;
   lyrics?: string;
   source?: string;
   error?: string;
@@ -55,12 +56,80 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
       }
     }
 
-    // Extraer el título de la canción
+    // Extraer el título y artista de la canción
     let title = 'Canción Importada';
-    if (html.toLowerCase().includes('<h1')) {
-      const titleRaw = html.split(/<h1[^>]*>/i)[1].split(/<\/h1>/i)[0];
-      title = titleRaw.replace(/<[^>]+>/g, '').trim();
+    let artist = '';
+
+    // 1) Intentar desde <title>
+    const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+    if (titleTag) {
+      const raw = titleTag[1].trim();
+      // Formato "TITULO: Acordes y Letra... (ARTISTA)" — nuevo formato LaCuerda
+      const parenM = raw.match(/\(([^)]+)\)/);
+      if (parenM) artist = parenM[1].trim();
+      const colonM = raw.match(/^([^:]+?):\s*Acordes/i);
+      if (colonM) title = colonM[1].trim();
+      else {
+        // Formato "Acordes de ARTISTA: TITULO"
+        const acordesMatch = raw.match(/^Acordes de\s+(.+?):\s+(.+)/i);
+        if (acordesMatch) {
+          artist = artist || acordesMatch[1].trim();
+          title = acordesMatch[2].trim();
+        } else {
+          // Formato "ARTISTA - TITULO - LaCuerda"
+          const parts = raw.split(' - ').map(s => s.trim()).filter(s => !/lacuerda/i.test(s));
+          if (parts.length >= 2) { artist = artist || parts[0]; title = parts.slice(1).join(' - '); }
+          else if (parts.length === 1) title = parts[0];
+        }
+      }
     }
+
+    // 2) Intentar desde <h1>
+    if (html.toLowerCase().includes('<h1')) {
+      const h1Raw = html.split(/<h1[^>]*>/i)[1].split(/<\/h1>/i)[0];
+      const h1Text = h1Raw.replace(/<[^>]+>/g, '').trim();
+      // Formato "TITULO, ARTISTA: Acordes"
+      const commaColon = h1Text.match(/^(.+?),\s*(.+?):\s*Acordes/i);
+      if (commaColon) {
+        if (!artist) artist = commaColon[2].trim();
+        title = commaColon[1].trim();
+      } else {
+        // Formato "TITULO ARTISTA" (sin separador, título primero)
+        if (artist && h1Text.includes(artist)) {
+          title = h1Text.replace(artist, '').trim();
+        } else {
+          const dashIdx = h1Text.indexOf(' - ');
+          if (dashIdx > 0) {
+            if (!artist) artist = h1Text.substring(0, dashIdx).trim();
+            title = h1Text.substring(dashIdx + 3).trim();
+          } else if (title === 'Canción Importada') {
+            title = h1Text;
+          }
+        }
+      }
+    }
+
+    // 3) Fallback: extraer artista desde la URL
+    if (!artist) {
+      const urlMatch = url.match(/lacuerda\.net\/([^/]+)/i);
+      if (urlMatch) {
+        artist = urlMatch[1]
+          .replace(/[-_]/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase())
+          .trim();
+      }
+    }
+
+    // 4) Último fallback: metadato byArtist
+    if (!artist) {
+      const byArtist = html.match(/itemprop=["']byArtist["'][^>]*>([^<]+)</i);
+      if (byArtist) {
+        artist = byArtist[1].trim();
+      }
+    }
+
+    // Capitalizar título (primera letra mayúscula)
+    title = title.charAt(0).toUpperCase() + title.slice(1);
 
     if (rawHtmlBlock && rawHtmlBlock.trim().length > 10) {
       // Limpiamos el texto para que quede puro
@@ -85,6 +154,7 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
 
       return {
         title,
+        artist: artist || undefined,
         lyrics: rawLyrics,
         source: url,
         success: true

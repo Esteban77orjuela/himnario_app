@@ -1,13 +1,15 @@
-import { View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { FlashList } from '@shopify/flash-list';
-import { mockHymns, Hymn } from '../data/hymns';
+import { mockHymns, christianSongs, Hymn } from '../data/hymns';
 import { Search, ChevronRight, Sun, Moon, X, Heart, Music2, Cross } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import Fuse from 'fuse.js';
+import { detectKey } from '../utils/keyDetector';
+import { detectArtistFromTitle } from '../utils/artistDetector';
 
 type FilterKey = 'adoracion' | 'alabanza' | 'favorites';
 
@@ -22,6 +24,9 @@ type FilterDef = {
   color: string;
   colorDark: string;
 };
+
+const ALL_KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'Cm', 'C#m', 'Dm', 'D#m', 'Em', 'Fm', 'F#m', 'Gm', 'G#m', 'Am', 'A#m', 'Bm'] as const;
+type MusicalKey = typeof ALL_KEYS[number];
 
 const FILTERS: FilterDef[] = [
   {
@@ -56,25 +61,66 @@ export default function HomeScreen({ navigation }: any) {
   const customSongs = useAppStore((state) => state.customSongs);
   const categoryOverrides = useAppStore((state) => state.categoryOverrides);
   const favorites = useAppStore((state) => state.favorites);
+  const songKeys = useAppStore((state) => state.songKeys);
+  const setSongKey = useAppStore((state) => state.setSongKey);
   useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
+  const [activeKeyFilter, setActiveKeyFilter] = useState<MusicalKey | null>(null);
 
   const allHymns = useMemo(() => {
-    const mappedCustoms = customSongs.map((cs, idx) => ({
-      id: cs.title || `custom-${idx}`,
-      number: 900 + idx,
-      title: cs.title || 'Desconocido',
-      lyrics: cs.lyrics || '',
-      category: categoryOverrides[cs.title || `custom-${idx}`] || cs.category || 'Importada',
-      isCustom: true,
-    }));
+    const mappedCustoms = customSongs.map((cs, idx) => {
+      let artist = cs.artist || '';
+      if (!artist && cs.title && cs.title.includes(' - ')) {
+        const detected = detectArtistFromTitle(cs.title);
+        if (detected) artist = detected;
+      }
+      return {
+        id: cs.title || `custom-${idx}`,
+        number: 900 + idx,
+        title: cs.title || 'Desconocido',
+        lyrics: cs.lyrics || '',
+        category: categoryOverrides[cs.title || `custom-${idx}`] || cs.category || 'Importada',
+        artist,
+        isCustom: true,
+      };
+    });
     const mappedMocks = mockHymns.map(h => ({
       ...h,
       category: categoryOverrides[h.id] || h.category,
     }));
-    return [...mappedMocks, ...mappedCustoms];
+    const mappedChristian = christianSongs.map(s => ({
+      id: s.id,
+      number: s.number,
+      title: s.title,
+      lyrics: s.lyrics,
+      category: categoryOverrides[s.id] || s.category || 'Alabanza',
+      artist: s.artist || '',
+      musicalKey: s.musicalKey,
+      isCustom: false,
+    }));
+    return [...mappedMocks, ...mappedChristian, ...mappedCustoms];
   }, [customSongs, categoryOverrides]);
+
+  // Auto-detect keys for hymns missing one
+  useEffect(() => {
+    allHymns.forEach(h => {
+      if (!songKeys[h.id]) {
+        if ((h as any).musicalKey) {
+          setSongKey(h.id, (h as any).musicalKey);
+        } else if (h.lyrics) {
+          setSongKey(h.id, detectKey(h.lyrics));
+        }
+      }
+    });
+  }, [allHymns, songKeys, setSongKey]);
+
+  const hymnsWithKeys = useMemo(() => {
+    return allHymns.map(h => ({
+      ...h,
+      musicalKey: songKeys[h.id] || (h as any).musicalKey || 'C',
+    }));
+  }, [allHymns, songKeys]);
 
   const counts = useMemo(() => ({
     adoracion: allHymns.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion')).length,
@@ -82,14 +128,28 @@ export default function HomeScreen({ navigation }: any) {
     favorites: favorites.length,
   }), [allHymns, favorites]);
 
+  const keyFilterOptions = useMemo(() => {
+    const keysInView = new Set<string>();
+    hymnsWithKeys.forEach(h => {
+      if (activeFilter === 'favorites' && !favorites.includes(h.id)) return;
+      if (activeFilter === 'alabanza' && !h.category.toLowerCase().includes('alabanza')) return;
+      if (activeFilter === 'adoracion' && !h.category.toLowerCase().includes('adoración') && !h.category.toLowerCase().includes('adoracion')) return;
+      keysInView.add(h.musicalKey);
+    });
+    return ALL_KEYS.filter(k => keysInView.has(k));
+  }, [hymnsWithKeys, activeFilter, favorites]);
+
   const filteredHymns = useMemo(() => {
-    let result = allHymns;
+    let result = hymnsWithKeys as (Hymn & { musicalKey: string })[];
     if (activeFilter === 'favorites') {
       result = result.filter(h => favorites.includes(h.id));
     } else if (activeFilter === 'alabanza') {
       result = result.filter(h => h.category.toLowerCase().includes('alabanza'));
     } else if (activeFilter === 'adoracion') {
       result = result.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion'));
+    }
+    if (activeKeyFilter) {
+      result = result.filter(h => h.musicalKey === activeKeyFilter);
     }
     result.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
 
@@ -101,9 +161,28 @@ export default function HomeScreen({ navigation }: any) {
       ignoreLocation: true,
     });
     return fuse.search(searchQuery).map(r => r.item);
-  }, [allHymns, activeFilter, favorites, searchQuery]);
+  }, [hymnsWithKeys, activeFilter, activeKeyFilter, favorites, searchQuery]);
 
-  const renderItem = ({ item, index }: { item: Hymn; index: number }) => (
+  const getKeyBadgeColors = useCallback((key: string) => {
+    const root = key.replace('m', '');
+    const isMinor = key.endsWith('m');
+    const majorHues: Record<string, string> = {
+      'C': '#f97316', 'C#': '#8b5cf6', 'D': '#ef4444', 'D#': '#ec4899',
+      'E': '#f43f5e', 'F': '#f59e0b', 'F#': '#10b981', 'G': '#3b82f6',
+      'G#': '#6366f1', 'A': '#22c55e', 'A#': '#14b8a6', 'B': '#a855f7',
+    };
+    const minorColors: Record<string, string> = {
+      'C': '#fdba74', 'C#': '#c4b5fd', 'D': '#fca5a5', 'D#': '#f9a8d4',
+      'E': '#fda4af', 'F': '#fde68a', 'F#': '#6ee7b7', 'G': '#93c5fd',
+      'G#': '#a5b4fc', 'A': '#86efac', 'A#': '#5eead4', 'B': '#d8b4fe',
+    };
+    const c = isMinor ? (minorColors[root] || '#94a3b8') : (majorHues[root] || '#94a3b8');
+    return c;
+  }, []);
+
+  const renderItem = ({ item, index }: { item: Hymn & { musicalKey?: string }; index: number }) => {
+    const keyColor = getKeyBadgeColors(item.musicalKey || 'C');
+    return (
     <MotiView
       from={{ opacity: 0, translateY: 20 }}
       animate={{ opacity: 1, translateY: 0 }}
@@ -115,24 +194,36 @@ export default function HomeScreen({ navigation }: any) {
         onPress={() => navigation.navigate('HymnDetail', { hymnId: item.id, isCustom: item.isCustom, hymn: item })}
       >
         <View className="flex-row items-center flex-1">
-          {!item.isCustom ? (
-            <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/10'}`}>
-              <Text className={`font-serif font-bold text-lg ${isDarkMode ? 'text-primary-dark' : 'text-primary'}`}>{item.number}</Text>
-            </View>
-          ) : (
-            <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${isDarkMode ? 'bg-accent-dark/20' : 'bg-accent/10'}`}>
-              <Text className={`font-serif font-bold text-lg ${isDarkMode ? 'text-accent-dark' : 'text-accent'}`}>WEB</Text>
-            </View>
-          )}
+          <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/10'}`}
+            style={{ backgroundColor: isDarkMode ? `${keyColor}20` : `${keyColor}15` }}
+          >
+            <Text className="font-serif font-bold text-lg"
+              style={{ color: keyColor }}
+            >
+              {item.musicalKey || 'C'}
+            </Text>
+          </View>
           <View className="flex-1 justify-center">
-            <Text className={`font-sans font-bold text-lg mb-1 ${isDarkMode ? 'text-text-dark' : 'text-text'}`} numberOfLines={1}>{item.title}</Text>
-            <Text className={`font-sans text-sm ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>{item.category}</Text>
+            <Text className={`font-sans font-bold text-lg mb-0.5 ${isDarkMode ? 'text-text-dark' : 'text-text'}`} numberOfLines={1}>
+              {item.title}
+            </Text>
+            <View className="flex-row items-center">
+              {item.artist ? (
+                <Text className={`font-sans text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                  {item.artist}
+                </Text>
+              ) : null}
+              {item.artist && item.category ? (
+                <Text className={`font-sans text-xs mx-1.5 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>·</Text>
+              ) : null}
+              <Text className={`font-sans text-xs ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>{item.category}</Text>
+            </View>
           </View>
         </View>
         <ChevronRight color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={24} />
       </TouchableOpacity>
     </MotiView>
-  );
+  );};
 
   return (
     <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
@@ -186,19 +277,80 @@ export default function HomeScreen({ navigation }: any) {
           })}
         </View>
 
+        {/* Key filter row */}
+        {activeFilter && keyFilterOptions.length > 1 && (
+          <MotiView
+            from={{ opacity: 0, translateY: -8 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            className="mb-3"
+          >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setActiveKeyFilter(null)}
+                className={`px-3 py-1.5 rounded-xl mr-2 border ${!activeKeyFilter
+                  ? `${isDarkMode ? 'bg-primary-dark/30 border-primary-dark/50' : 'bg-primary/20 border-primary/40'}`
+                  : `${isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200'}`
+                }`}
+              >
+                <Text className={`text-xs font-bold ${!activeKeyFilter ? 'text-primary' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Todas</Text>
+              </TouchableOpacity>
+              {keyFilterOptions.map(k => {
+                const isActiveKey = activeKeyFilter === k;
+                const kc = getKeyBadgeColors(k);
+                return (
+                  <TouchableOpacity
+                    key={k}
+                    activeOpacity={0.7}
+                    onPress={() => setActiveKeyFilter(isActiveKey ? null : k)}
+                    className="px-3 py-1.5 rounded-xl mr-2 border"
+                    style={{
+                      backgroundColor: isActiveKey ? kc : isDarkMode ? '#1e293b' : '#ffffff',
+                      borderColor: isActiveKey ? kc : isDarkMode ? '#334155' : '#e2e8f0',
+                      shadowColor: isActiveKey ? kc : 'transparent',
+                      shadowOpacity: 0.5,
+                      shadowRadius: 6,
+                      shadowOffset: { width: 0, height: 2 },
+                      elevation: isActiveKey ? 5 : 0,
+                    }}
+                  >
+                    <Text className="text-xs font-bold tracking-wider"
+                      style={{ color: isActiveKey ? '#ffffff' : kc }}
+                    >
+                      {k}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </MotiView>
+        )}
+
         {/* Active filter indicator */}
-        {activeFilter && (
+        {(activeFilter || activeKeyFilter) && (
           <MotiView
             from={{ opacity: 0, translateY: -8 }}
             animate={{ opacity: 1, translateY: 0 }}
             className="flex-row items-center mb-3 px-1"
           >
             <Text className={`text-sm font-sans ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>
-              Mostrando: <Text className="font-bold">{FILTERS.find(f => f.key === activeFilter)?.label}</Text>
+              Mostrando: <Text className="font-bold">
+                {activeFilter ? FILTERS.find(f => f.key === activeFilter)?.label : ''}
+                {activeFilter && activeKeyFilter ? ' · ' : ''}
+                {activeKeyFilter ? `Tono ${activeKeyFilter}` : ''}
+                {!activeFilter && !activeKeyFilter ? 'Todas' : ''}
+              </Text>
             </Text>
-            <TouchableOpacity onPress={() => setActiveFilter(null)} className="ml-2">
-              <X size={14} color={isDarkMode ? '#94A3B8' : '#64748B'} />
-            </TouchableOpacity>
+            {activeKeyFilter && (
+              <TouchableOpacity onPress={() => setActiveKeyFilter(null)} className="ml-2">
+                <X size={14} color={isDarkMode ? '#94A3B8' : '#64748B'} />
+              </TouchableOpacity>
+            )}
+            {activeFilter && (
+              <TouchableOpacity onPress={() => setActiveFilter(null)} className="ml-2">
+                <X size={14} color={isDarkMode ? '#94A3B8' : '#64748B'} />
+              </TouchableOpacity>
+            )}
           </MotiView>
         )}
 

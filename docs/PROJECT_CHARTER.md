@@ -1,8 +1,8 @@
 # Documento de Visión y Requerimientos (Project Charter)
 
 **Proyecto:** AppHimnario  
-**Versión:** 1.2.0  
-**Última actualización:** 2026-06-17  
+**Versión:** 1.8.2  
+**Última actualización:** 2026-06-22  
 **Metodología:** Agile / Scrum (iteraciones cortas, entrega continua de valor)
 
 ---
