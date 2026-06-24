@@ -16,6 +16,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.esteban77orjuela.apphimnario",
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundColor": "#0f172a"
@@ -23,6 +24,12 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "5e825ad6-4dc3-4289-b93d-d850a569ec2c"
+      }
+    },
+    "owner": "esteban77orjuela"
   }
 }
