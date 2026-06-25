@@ -5,13 +5,13 @@ import { useAppStore } from '../store/useAppStore';
 import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { FlashList } from '@shopify/flash-list';
 import { mockHymns, christianSongs, Hymn } from '../data/hymns';
-import { Search, ChevronRight, Sun, Moon, X, Heart, Music2, Cross } from 'lucide-react-native';
+import { Search, ChevronRight, Sun, Moon, X, Heart, Music2, Cross, Users } from 'lucide-react-native';
 import { MotiView } from 'moti';
 import Fuse from 'fuse.js';
 import { detectKey } from '../utils/keyDetector';
 import { detectArtistFromTitle } from '../utils/artistDetector';
 
-type FilterKey = 'adoracion' | 'alabanza' | 'favorites';
+type FilterKey = 'adoracion' | 'alabanza' | 'favorites' | 'artistas';
 
 type FilterDef = {
   key: FilterKey;
@@ -53,6 +53,14 @@ const FILTERS: FilterDef[] = [
     activeBg: 'bg-rose-600', activeBgDark: 'bg-rose-500',
     color: '#E11D48', colorDark: '#FB7185',
   },
+  {
+    key: 'artistas',
+    label: 'Artistas',
+    icon: Users,
+    bg: 'bg-emerald-50', bgDark: 'bg-emerald-950/40',
+    activeBg: 'bg-emerald-600', activeBgDark: 'bg-emerald-500',
+    color: '#059669', colorDark: '#34D399',
+  }
 ];
 
 export default function HomeScreen({ navigation }: any) {
@@ -67,6 +75,7 @@ export default function HomeScreen({ navigation }: any) {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState<FilterKey | null>(null);
   const [activeKeyFilter, setActiveKeyFilter] = useState<MusicalKey | null>(null);
+  const [activeArtistFilter, setActiveArtistFilter] = useState<string | null>(null);
 
   const allHymns = useMemo(() => {
     const mappedCustoms = customSongs.map((cs, idx) => {
@@ -126,6 +135,7 @@ export default function HomeScreen({ navigation }: any) {
     adoracion: allHymns.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion')).length,
     alabanza: allHymns.filter(h => h.category.toLowerCase().includes('alabanza')).length,
     favorites: favorites.length,
+    artistas: new Set(allHymns.map(h => h.artist).filter(Boolean)).size,
   }), [allHymns, favorites]);
 
   const keyFilterOptions = useMemo(() => {
@@ -139,6 +149,10 @@ export default function HomeScreen({ navigation }: any) {
     return ALL_KEYS.filter(k => keysInView.has(k));
   }, [hymnsWithKeys, activeFilter, favorites]);
 
+  const artistFilterOptions = useMemo(() => {
+    return Array.from(new Set(allHymns.map(h => h.artist).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  }, [allHymns]);
+
   const filteredHymns = useMemo(() => {
     let result = hymnsWithKeys as (Hymn & { musicalKey: string })[];
     if (activeFilter === 'favorites') {
@@ -147,11 +161,21 @@ export default function HomeScreen({ navigation }: any) {
       result = result.filter(h => h.category.toLowerCase().includes('alabanza'));
     } else if (activeFilter === 'adoracion') {
       result = result.filter(h => h.category.toLowerCase().includes('adoración') || h.category.toLowerCase().includes('adoracion'));
+    } else if (activeFilter === 'artistas') {
+      // If an artist is selected, filter by it. Otherwise show all (sorted alphabetically)
+      if (activeArtistFilter) {
+        result = result.filter(h => h.artist === activeArtistFilter);
+      }
+      // Always sort by title when in artistas mode
+      result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+      if (!searchQuery) return result;
+      const fuse = new Fuse(result, { keys: ['title', 'artist'], threshold: 0.3, ignoreLocation: true });
+      return fuse.search(searchQuery).map(r => r.item);
     }
     if (activeKeyFilter) {
       result = result.filter(h => h.musicalKey === activeKeyFilter);
     }
-    result.sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+    result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
 
     if (!searchQuery) return result;
 
@@ -161,7 +185,7 @@ export default function HomeScreen({ navigation }: any) {
       ignoreLocation: true,
     });
     return fuse.search(searchQuery).map(r => r.item);
-  }, [hymnsWithKeys, activeFilter, activeKeyFilter, favorites, searchQuery]);
+  }, [hymnsWithKeys, activeFilter, activeKeyFilter, activeArtistFilter, favorites, searchQuery]);
 
   const getKeyBadgeColors = useCallback((key: string) => {
     const root = key.replace('m', '');
@@ -183,47 +207,48 @@ export default function HomeScreen({ navigation }: any) {
   const renderItem = ({ item, index }: { item: Hymn & { musicalKey?: string }; index: number }) => {
     const keyColor = getKeyBadgeColors(item.musicalKey || 'C');
     return (
-    <MotiView
-      from={{ opacity: 0, translateY: 20 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 400, delay: index * 50 }}
-    >
-      <TouchableOpacity
-        activeOpacity={0.8}
-        className={`flex-row items-center p-5 mb-4 mx-4 rounded-3xl border ${isDarkMode ? 'bg-surface-dark border-white/5 shadow-black/20' : 'bg-white border-slate-100 shadow-slate-200/50'}`}
-        onPress={() => navigation.navigate('HymnDetail', { hymnId: item.id, isCustom: item.isCustom, hymn: item })}
+      <MotiView
+        from={{ opacity: 0, translateY: 10 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ type: 'timing', duration: 300, delay: Math.min(index * 30, 300) }}
       >
-        <View className="flex-row items-center flex-1">
-          <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/10'}`}
-            style={{ backgroundColor: isDarkMode ? `${keyColor}20` : `${keyColor}15` }}
-          >
-            <Text className="font-serif font-bold text-lg"
-              style={{ color: keyColor }}
+        <TouchableOpacity
+          activeOpacity={0.8}
+          className={`flex-row items-center p-5 mb-4 mx-4 rounded-3xl border ${isDarkMode ? 'bg-surface-dark border-white/5 shadow-black/20' : 'bg-white border-slate-100 shadow-slate-200/50'}`}
+          onPress={() => navigation.navigate('HymnDetail', { hymnId: item.id, isCustom: item.isCustom, hymn: item })}
+        >
+          <View className="flex-row items-center flex-1">
+            <View className={`w-14 h-14 rounded-2xl items-center justify-center mr-4 ${isDarkMode ? 'bg-primary-dark/20' : 'bg-primary/10'}`}
+              style={{ backgroundColor: isDarkMode ? `${keyColor}20` : `${keyColor}15` }}
             >
-              {item.musicalKey || 'C'}
-            </Text>
-          </View>
-          <View className="flex-1 justify-center">
-            <Text className={`font-sans font-bold text-lg mb-0.5 ${isDarkMode ? 'text-text-dark' : 'text-text'}`} numberOfLines={1}>
-              {item.title}
-            </Text>
-            <View className="flex-row items-center">
-              {item.artist ? (
-                <Text className={`font-sans text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {item.artist}
-                </Text>
-              ) : null}
-              {item.artist && item.category ? (
-                <Text className={`font-sans text-xs mx-1.5 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>·</Text>
-              ) : null}
-              <Text className={`font-sans text-xs ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>{item.category}</Text>
+              <Text className="font-serif font-bold text-lg"
+                style={{ color: keyColor }}
+              >
+                {item.musicalKey || 'C'}
+              </Text>
+            </View>
+            <View className="flex-1 justify-center">
+              <Text className={`font-sans font-bold text-lg mb-0.5 ${isDarkMode ? 'text-text-dark' : 'text-text'}`} numberOfLines={1}>
+                {item.title}
+              </Text>
+              <View className="flex-row items-center">
+                {item.artist ? (
+                  <Text className={`font-sans text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {item.artist}
+                  </Text>
+                ) : null}
+                {item.artist && item.category ? (
+                  <Text className={`font-sans text-xs mx-1.5 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>·</Text>
+                ) : null}
+                <Text className={`font-sans text-xs ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>{item.category}</Text>
+              </View>
             </View>
           </View>
-        </View>
-        <ChevronRight color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={24} />
-      </TouchableOpacity>
-    </MotiView>
-  );};
+          <ChevronRight color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={24} />
+        </TouchableOpacity>
+      </MotiView>
+    );
+  };
 
   return (
     <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
@@ -240,45 +265,91 @@ export default function HomeScreen({ navigation }: any) {
         </View>
 
         {/* Three filter buttons */}
-        <View className="flex-row gap-x-3 mb-4">
-          {FILTERS.map(({ key, label, icon: Icon, bg, bgDark, activeBg, activeBgDark, color, colorDark }) => {
-            const isActive = activeFilter === key;
-            const count = counts[key];
-            return (
-              <TouchableOpacity
-                key={key}
-                activeOpacity={0.85}
-                onPress={() => setActiveFilter(isActive ? null : key)}
-                className={`flex-1 items-center py-4 px-2 rounded-2xl border ${isActive
-                  ? `${isDarkMode ? activeBgDark : activeBg} border-transparent`
-                  : `${isDarkMode ? bgDark : bg} ${isDarkMode ? 'border-slate-700/50' : 'border-slate-200/50'}`
-                }`}
-              >
-                <MotiView
-                  animate={{ scale: isActive ? 1.1 : 1 }}
-                  transition={{ type: 'spring', damping: 12 }}
+        <View className="mb-4">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+            {FILTERS.map(({ key, label, icon: Icon, bg, bgDark, activeBg, activeBgDark, color, colorDark }) => {
+              const isActive = activeFilter === key;
+              const count = counts[key];
+              return (
+                <TouchableOpacity
+                  key={key}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    setActiveFilter(isActive ? null : key);
+                    if (key !== 'artistas') setActiveArtistFilter(null);
+                    if (key === 'artistas') setActiveKeyFilter(null);
+                  }}
+                  className={`w-28 items-center py-4 px-2 rounded-2xl border ${isActive
+                    ? `${isDarkMode ? activeBgDark : activeBg} border-transparent`
+                    : `${isDarkMode ? bgDark : bg} ${isDarkMode ? 'border-slate-700/50' : 'border-slate-200/50'}`
+                    }`}
                 >
-                  <Icon
-                    size={26}
-                    color={isActive ? '#FFFFFF' : isDarkMode ? colorDark : color}
-                    fill={isActive ? '#FFFFFF' : 'transparent'}
-                  />
-                </MotiView>
-                <Text className={`font-sans font-bold text-xs mt-2 ${isActive ? 'text-white' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
-                  {label}
-                </Text>
-                <View className={`mt-1.5 px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20' : isDarkMode ? 'bg-black/10' : 'bg-white/60'}`}>
-                  <Text className={`text-[10px] font-bold ${isActive ? 'text-white' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                    {count}
+                  <MotiView
+                    animate={{ scale: isActive ? 1.1 : 1 }}
+                    transition={{ type: 'spring', damping: 12 }}
+                  >
+                    <Icon
+                      size={26}
+                      color={isActive ? '#FFFFFF' : isDarkMode ? colorDark : color}
+                      fill={isActive ? '#FFFFFF' : 'transparent'}
+                    />
+                  </MotiView>
+                  <Text className={`font-sans font-bold text-xs mt-2 ${isActive ? 'text-white' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
+                    {label}
                   </Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+                  <View className={`mt-1.5 px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20' : isDarkMode ? 'bg-black/10' : 'bg-white/60'}`}>
+                    <Text className={`text-[10px] font-bold ${isActive ? 'text-white' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {count}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
         </View>
 
+        {/* Secondary row for Artists or Keys */}
+        {activeFilter === 'artistas' && (
+          <MotiView
+            from={{ opacity: 0, translateY: -8 }}
+            animate={{ opacity: 1, translateY: 0 }}
+            className="mb-3"
+          >
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => setActiveArtistFilter(null)}
+                className={`px-3 py-1.5 rounded-xl mr-2 border ${!activeArtistFilter
+                  ? `${isDarkMode ? 'bg-primary-dark/30 border-primary-dark/50' : 'bg-primary/20 border-primary/40'}`
+                  : `${isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200'}`
+                  }`}
+              >
+                <Text className={`text-xs font-bold ${!activeArtistFilter ? 'text-primary' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Todos los Artistas</Text>
+              </TouchableOpacity>
+              {artistFilterOptions.map(artist => {
+                const isActiveArtist = activeArtistFilter === artist;
+                return (
+                  <TouchableOpacity
+                    key={artist}
+                    activeOpacity={0.7}
+                    onPress={() => setActiveArtistFilter(isActiveArtist ? null : artist)}
+                    className={`px-3 py-1.5 rounded-xl mr-2 border ${isActiveArtist
+                      ? `${isDarkMode ? 'bg-emerald-500/20 border-emerald-500/50' : 'bg-emerald-50 border-emerald-500/40'}`
+                      : `${isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200'}`
+                      }`}
+                  >
+                    <Text className={`text-xs font-bold ${isActiveArtist ? (isDarkMode ? 'text-emerald-400' : 'text-emerald-700') : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
+                      {artist}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </MotiView>
+        )}
+
         {/* Key filter row */}
-        {activeFilter && keyFilterOptions.length > 1 && (
+        {activeFilter !== 'artistas' && activeFilter && keyFilterOptions.length > 1 && (
           <MotiView
             from={{ opacity: 0, translateY: -8 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -291,7 +362,7 @@ export default function HomeScreen({ navigation }: any) {
                 className={`px-3 py-1.5 rounded-xl mr-2 border ${!activeKeyFilter
                   ? `${isDarkMode ? 'bg-primary-dark/30 border-primary-dark/50' : 'bg-primary/20 border-primary/40'}`
                   : `${isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200'}`
-                }`}
+                  }`}
               >
                 <Text className={`text-xs font-bold ${!activeKeyFilter ? 'text-primary' : isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>Todas</Text>
               </TouchableOpacity>
@@ -327,7 +398,7 @@ export default function HomeScreen({ navigation }: any) {
         )}
 
         {/* Active filter indicator */}
-        {(activeFilter || activeKeyFilter) && (
+        {(activeFilter || activeKeyFilter || activeArtistFilter) && (
           <MotiView
             from={{ opacity: 0, translateY: -8 }}
             animate={{ opacity: 1, translateY: 0 }}
@@ -338,11 +409,17 @@ export default function HomeScreen({ navigation }: any) {
                 {activeFilter ? FILTERS.find(f => f.key === activeFilter)?.label : ''}
                 {activeFilter && activeKeyFilter ? ' · ' : ''}
                 {activeKeyFilter ? `Tono ${activeKeyFilter}` : ''}
-                {!activeFilter && !activeKeyFilter ? 'Todas' : ''}
+                {activeFilter === 'artistas' && activeArtistFilter ? ` · ${activeArtistFilter}` : ''}
+                {!activeFilter && !activeKeyFilter && !activeArtistFilter ? 'Todas' : ''}
               </Text>
             </Text>
-            {activeKeyFilter && (
+            {activeKeyFilter && activeFilter !== 'artistas' && (
               <TouchableOpacity onPress={() => setActiveKeyFilter(null)} className="ml-2">
+                <X size={14} color={isDarkMode ? '#94A3B8' : '#64748B'} />
+              </TouchableOpacity>
+            )}
+            {activeArtistFilter && activeFilter === 'artistas' && (
+              <TouchableOpacity onPress={() => setActiveArtistFilter(null)} className="ml-2">
                 <X size={14} color={isDarkMode ? '#94A3B8' : '#64748B'} />
               </TouchableOpacity>
             )}

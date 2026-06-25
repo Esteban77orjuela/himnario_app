@@ -1,4 +1,4 @@
-import { parseLyricsToWords, isChordLine, transposePlainText, convertPlainTextToInline } from '../lyricsParser';
+import { parseLyricsToWords, isChordLine, convertPlainTextToInline } from '../lyricsParser';
 
 describe('parseLyricsToWords', () => {
   it('parses simple lyrics without chords', () => {
@@ -42,25 +42,6 @@ describe('isChordLine', () => {
 
   it('detects complex chords', () => {
     expect(isChordLine('Cmaj7 Gsus4 D#m Bb/F')).toBe(true);
-  });
-});
-
-describe('transposePlainText', () => {
-  it('transposes chord lines and leaves lyrics unchanged', () => {
-    const input = 'C G\nMi vida entera';
-    const result = transposePlainText(input, 2, true);
-    expect(result).toBe('D A\nMi vida entera');
-  });
-
-  it('hides chord lines when showChords is false', () => {
-    const input = 'C G\nMi vida entera';
-    const result = transposePlainText(input, 0, false);
-    expect(result).toBe('Mi vida entera');
-  });
-
-  it('returns same text when steps is 0 and chords visible', () => {
-    const input = 'C G\nMi vida entera';
-    expect(transposePlainText(input, 0, true)).toBe(input);
   });
 });
 

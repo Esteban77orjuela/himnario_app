@@ -1,3 +1,5 @@
+const CHORD_REGEX = /^(?:[A-G]|Do|Re|Mi|Fa|Sol|La|Si)[b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\([^)]+\))?(?:\/(?:[A-G]|Do|Re|Mi|Fa|Sol|La|Si)[b#]?)?$/;
+
 export interface WordSegment {
   text: string;
   chord?: string;
@@ -16,25 +18,27 @@ export function parseLyricsToWords(lyrics: string): WordSegment[][] {
       const char = line[i];
 
       if (char === '[') {
-        // Push accumulated text before the chord
         if (currentText.length > 0) {
           segments.push({ text: currentText, chord: currentChord });
           currentText = '';
           currentChord = undefined;
         }
 
-        // Extract chord
-        let chord = '';
+        let content = '';
         i++;
         while (i < line.length && line[i] !== ']') {
-          chord += line[i];
+          content += line[i];
           i++;
         }
-        currentChord = chord;
+
+        if (CHORD_REGEX.test(content.trim())) {
+          currentChord = content;
+        } else {
+          currentText += '[' + content + ']';
+        }
       } else {
         currentText += char;
 
-        // Break by space to allow wrapping
         if (char === ' ') {
           segments.push({ text: currentText, chord: currentChord });
           currentText = '';
@@ -51,55 +55,20 @@ export function parseLyricsToWords(lyrics: string): WordSegment[][] {
   });
 }
 
-// NUEVA FUNCIÓN: Transpositor súper rápido para canciones importadas de LaCuerda.
-// Evita crear miles de componentes React y solo transpone las líneas que detecta como acordes.
-import { transposeChord } from './chordTransposer';
-
-export function transposePlainText(lyrics: string, steps: number, showChords: boolean): string {
-  if (!showChords) {
-    // Si no quiere ver acordes, intentamos ocultar las líneas que son puramente acordes
-    return lyrics.split('\n').filter(line => !isChordLine(line)).join('\n');
-  }
-
-  if (steps === 0) return lyrics;
-
-  const lines = lyrics.split('\n');
-  return lines.map(line => {
-    if (isChordLine(line)) {
-      // En lugar de usar Regex con \b (que falla con el símbolo #), dividimos por espacios.
-      // Usamos /(\s+)/ para mantener los espacios intactos al hacer join().
-      const chordRegexExact = /^[A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*$/;
-
-      return line.split(/(\s+)/).map(chunk => {
-        if (chordRegexExact.test(chunk)) {
-          return transposeChord(chunk, steps);
-        }
-        return chunk;
-      }).join('');
-    }
-    return line;
-  }).join('\n');
-}
-
-// Algoritmo para detectar si una línea es de "Solo Acordes" (Formato LaCuerda)
 export function isChordLine(line: string): boolean {
   const trimmed = line.trim();
   if (!trimmed) return false;
 
-  // Dividimos la línea en palabras (ignorando símbolos como / o | o -)
   const words = trimmed.split(/[\s/|-]+/).filter(w => w.length > 0 && !w.includes('//'));
   if (words.length === 0) return false;
 
-  // Expresión regular matemática para un acorde (soporta bajos como C/E)
-  const chordRegex = /^[A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\/[A-G][b#]?)?$/;
   let chordCount = 0;
 
   for (const w of words) {
-    if (chordRegex.test(w)) chordCount++;
+    if (CHORD_REGEX.test(w)) chordCount++;
   }
 
-  // Si más del 60% de las palabras parecen acordes, confirmamos que es una línea de acordes
-  return chordCount / words.length >= 0.6;
+  return chordCount / words.length >= 0.5;
 }
 
 // Convierte formato LaCuerda (acordes en línea superior) a formato nativo (acordes inline [C])
@@ -111,7 +80,7 @@ export function convertPlainTextToInline(lyrics: string): string {
     const line = lines[i];
     if (isChordLine(line)) {
       const chords: {chord: string, index: number}[] = [];
-      const regex = /([A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\/[A-G][b#]?)?)/g;
+      const regex = /([A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\([^)]+\))?(?:\/[A-G][b#]?)?)/g;
       let match;
       while ((match = regex.exec(line)) !== null) {
         chords.push({ chord: match[1], index: match.index });

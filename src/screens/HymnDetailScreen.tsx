@@ -82,6 +82,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   const [isAutoScrolling, setIsAutoScrolling] = useState(false);
   const scrollY = useRef(0);
   const autoScrollFrame = useRef<number>(0);
+  const [showStickyHeader, setShowStickyHeader] = useState(false);
 
   useEffect(() => {
     if (isAutoScrolling) {
@@ -100,7 +101,10 @@ export default function HymnDetailScreen({ route, navigation }: any) {
   }, [isAutoScrolling]);
 
   const _handleScroll = (event: any) => {
-    scrollY.current = event.nativeEvent.contentOffset.y;
+    const y = event.nativeEvent.contentOffset.y;
+    scrollY.current = y;
+    if (y > 100 && !showStickyHeader) setShowStickyHeader(true);
+    else if (y <= 100 && showStickyHeader) setShowStickyHeader(false);
   };
 
   // --- METRONOME LOGIC ---
@@ -228,6 +232,14 @@ export default function HymnDetailScreen({ route, navigation }: any) {
         >
           <ArrowLeft color={isDarkMode ? '#818CF8' : '#4F46E5'} size={24} />
         </TouchableOpacity>
+
+        <View className="flex-1 px-4 items-center justify-center">
+          <MotiView animate={{ opacity: showStickyHeader ? 1 : 0, translateY: showStickyHeader ? 0 : 10 }}>
+            <Text className={`font-serif font-bold text-lg ${isDarkMode ? 'text-white' : 'text-slate-900'}`} numberOfLines={1}>
+              {hymn.title}
+            </Text>
+          </MotiView>
+        </View>
 
         <View className="flex-row items-center gap-x-1">
           <TouchableOpacity onPress={() => setIsProjectorMode(!isProjectorMode)} className={`p-3 rounded-2xl ${isProjectorMode ? 'bg-blue-500/20' : ''}`}>
@@ -399,6 +411,8 @@ export default function HymnDetailScreen({ route, navigation }: any) {
       >
         <ScrollView 
           ref={scrollRef}
+          onScroll={_handleScroll}
+          scrollEventThrottle={16}
           className="flex-1 px-4" 
           contentContainerStyle={{ paddingBottom: 150 }}
           showsVerticalScrollIndicator={false}
