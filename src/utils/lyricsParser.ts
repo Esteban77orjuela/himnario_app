@@ -71,6 +71,17 @@ export function isChordLine(line: string): boolean {
   return chordCount / words.length >= 0.5;
 }
 
+// Helper to snap an index to the start of the current word
+function snapToWordStart(text: string, index: number): number {
+  if (index >= text.length) return text.length;
+  if (text[index] === ' ') return index;
+  let newIdx = index;
+  while (newIdx > 0 && text[newIdx - 1] !== ' ') {
+    newIdx--;
+  }
+  return newIdx;
+}
+
 // Convierte formato LaCuerda (acordes en línea superior) a formato nativo (acordes inline [C])
 export function convertPlainTextToInline(lyrics: string): string {
   const lines = lyrics.split('\n');
@@ -95,9 +106,23 @@ export function convertPlainTextToInline(lyrics: string): string {
           mergedLine = mergedLine.padEnd(maxChordIdx, ' ');
         }
         
-        for (let j = chords.length - 1; j >= 0; j--) {
-          const { chord, index } = chords[j];
-          mergedLine = mergedLine.slice(0, index) + `[${chord}]` + mergedLine.slice(index);
+        // Snap all chord indices first based on the ORIGINAL mergedLine text.
+        const snappedChords = chords.map(c => {
+           return { chord: c.chord, index: snapToWordStart(mergedLine, c.index) };
+        });
+        
+        // Group chords that snapped to the same index
+        const groupedChords: Record<number, string[]> = {};
+        for (const c of snappedChords) {
+           if (!groupedChords[c.index]) groupedChords[c.index] = [];
+           groupedChords[c.index].push(c.chord);
+        }
+        
+        // Insert right-to-left based on grouped indices
+        const indices = Object.keys(groupedChords).map(Number).sort((a,b) => b - a);
+        for (const idx of indices) {
+           const chordString = groupedChords[idx].map(c => `[${c}]`).join('');
+           mergedLine = mergedLine.slice(0, idx) + chordString + mergedLine.slice(idx);
         }
         result.push(mergedLine);
         i++; // Skip next line since we merged it

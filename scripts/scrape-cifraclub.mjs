@@ -456,6 +456,19 @@ function isChordLine(line) {
   return chordCount / words.length >= 0.5;
 }
 
+// Helper to snap an index to the start of the current word
+function snapToWordStart(text, index) {
+  if (index >= text.length) return text.length;
+  // If we're already on a space, no need to snap
+  if (text[index] === ' ') return index;
+  // If we're on a non-space, go backwards until we hit a space or start of string
+  let newIdx = index;
+  while (newIdx > 0 && text[newIdx - 1] !== ' ') {
+    newIdx--;
+  }
+  return newIdx;
+}
+
 function convertPlainTextToInline(lyrics) {
   const lines = lyrics.split('\n');
   const result = [];
@@ -479,10 +492,25 @@ function convertPlainTextToInline(lyrics) {
           mergedLine = mergedLine.padEnd(maxChordIdx, ' ');
         }
         
-        for (let j = chords.length - 1; j >= 0; j--) {
-          const { chord, index } = chords[j];
-          mergedLine = mergedLine.slice(0, index) + `[${chord}]` + mergedLine.slice(index);
+        // Snap all chord indices first based on the ORIGINAL mergedLine text.
+        const snappedChords = chords.map(c => {
+           return { chord: c.chord, index: snapToWordStart(mergedLine, c.index) };
+        });
+        
+        // Group chords that snapped to the same index
+        const groupedChords = {};
+        for (const c of snappedChords) {
+           if (!groupedChords[c.index]) groupedChords[c.index] = [];
+           groupedChords[c.index].push(c.chord);
         }
+        
+        // Insert right-to-left based on grouped indices
+        const indices = Object.keys(groupedChords).map(Number).sort((a,b) => b - a);
+        for (const idx of indices) {
+           const chordString = groupedChords[idx].map(c => `[${c}]`).join('');
+           mergedLine = mergedLine.slice(0, idx) + chordString + mergedLine.slice(idx);
+        }
+        
         result.push(mergedLine);
         i++; 
       } else {
@@ -521,12 +549,12 @@ async function scrapeSong(song) {
     let preHtml = $('pre').html() || '';
     if (!preHtml) return null;
 
-    // Limpiar texto basura
-    preHtml = preHtml.replace(/Continúa después del anuncio/gi, '');
-    preHtml = preHtml.replace(/<[^>]*>/g, ''); // Convertir a texto plano
+    // Convertir <br> a saltos de línea y usar cheerio.text() para resolver entidades (como &nbsp;)
+    preHtml = preHtml.replace(/<br\s*\/?>/gi, '\n');
+    const plainText = cheerio.load(`<pre>${preHtml}</pre>`)('pre').text();
     
     // Parsear
-    const inlineLyrics = convertPlainTextToInline(preHtml);
+    const inlineLyrics = convertPlainTextToInline(plainText);
     
     return {
       id: song.title.toLowerCase().replace(/[^a-z0-9]/g, '_'),

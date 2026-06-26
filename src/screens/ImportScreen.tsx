@@ -14,13 +14,22 @@ export default function ImportScreen({ navigation }: any) {
   const addCustomSong = useAppStore((state) => state.addCustomSong);
   const isDarkMode = useIsDarkMode();
 
-  const handleSearch = () => {
+  const handleSearchLaCuerda = () => {
     if (!searchQuery.trim()) {
       Alert.alert('Aviso', 'Por favor ingresa el nombre de la canción');
       return;
     }
     const query = searchQuery.trim().replace(/\s+/g, '+');
     Linking.openURL(`https://acordes.lacuerda.net/busca.php?exp=${query}`);
+  };
+
+  const handleSearchCifraClub = () => {
+    if (!searchQuery.trim()) {
+      Alert.alert('Aviso', 'Por favor ingresa el nombre de la canción');
+      return;
+    }
+    const query = searchQuery.trim().replace(/\s+/g, '+');
+    Linking.openURL(`https://www.cifraclub.com/?q=${query}`);
   };
 
   const handleImport = async () => {
@@ -67,14 +76,14 @@ export default function ImportScreen({ navigation }: any) {
             </View>
             <Text className={`text-2xl font-bold text-center mb-2 ${isDarkMode ? 'text-white' : 'text-black'}`}>Importar Canción</Text>
             <Text className={`text-center text-base ${isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
-              Busca una canción en LaCuerda o pega directamente el enlace para guardarla en tu dispositivo.
+              Busca una canción en LaCuerda o CifraClub, o pega directamente el enlace para guardarla en tu dispositivo.
             </Text>
           </View>
 
           {/* Buscador Integrado */}
           <View className={`p-4 rounded-2xl border mb-6 ${isDarkMode ? 'bg-surface-dark/50 border-slate-700/50' : 'bg-white border-slate-200'}`}>
             <Text className={`text-sm font-medium mb-2 uppercase tracking-wider ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
-              1. Buscar en LaCuerda
+              1. Buscar Canción en la Web
             </Text>
             <View className={`flex-row items-center rounded-xl px-4 py-1 border mb-4 ${isDarkMode ? 'bg-background-dark/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
               <TextInput
@@ -85,10 +94,17 @@ export default function ImportScreen({ navigation }: any) {
                 onChangeText={setSearchQuery}
                 autoCapitalize="words"
                 returnKeyType="search"
-                onSubmitEditing={handleSearch}
+                onSubmitEditing={handleSearchLaCuerda}
               />
-              <TouchableOpacity onPress={handleSearch} className={`ml-2 p-2 rounded-lg ${isDarkMode ? 'bg-primary-dark' : 'bg-primary'}`}>
-                <Search size={20} color="white" />
+            </View>
+            <View className="flex-row gap-2 mb-4">
+              <TouchableOpacity onPress={handleSearchLaCuerda} className={`flex-1 p-3 rounded-lg items-center flex-row justify-center ${isDarkMode ? 'bg-primary-dark' : 'bg-primary'}`}>
+                <Search size={18} color="white" className="mr-2" />
+                <Text className="text-white font-medium">LaCuerda</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleSearchCifraClub} className={`flex-1 p-3 rounded-lg items-center flex-row justify-center bg-orange-500`}>
+                <Search size={18} color="white" className="mr-2" />
+                <Text className="text-white font-medium">CifraClub</Text>
               </TouchableOpacity>
             </View>
             <Text className={`text-xs ${isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
@@ -105,7 +121,7 @@ export default function ImportScreen({ navigation }: any) {
             <LinkIcon size={20} color="#94a3b8" />
             <TextInput
               className="flex-1 text-white ml-3 text-base"
-              placeholder="https://acordes.lacuerda.net/..."
+              placeholder="https://acordes.lacuerda.net/... o cifraclub.com/..."
               placeholderTextColor="#64748b"
               value={url}
               onChangeText={setUrl}

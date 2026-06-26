@@ -37,6 +37,9 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
 
     logger.info('Scraper response', { status: response.status, hasPre: html.toLowerCase().includes('<pre>'), preview: html.substring(0, 100) });
 
+    // Detectar si es CifraClub
+    const isCifraClub = url.toLowerCase().includes('cifraclub.com');
+
     // IDEA PARTICULAR: LaCuerda inserta un <pre id='tCode'></pre> VACÍO antes del <PRE> real
     // para engañar a los bots. Para vencer esto, buscamos TODOS los bloques <pre> de la página
     // y seleccionamos el más largo (que obviamente será el que contiene toda la canción).
@@ -64,22 +67,32 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
     const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
     if (titleTag) {
       const raw = titleTag[1].trim();
-      // Formato "TITULO: Acordes y Letra... (ARTISTA)" — nuevo formato LaCuerda
-      const parenM = raw.match(/\(([^)]+)\)/);
-      if (parenM) artist = parenM[1].trim();
-      const colonM = raw.match(/^([^:]+?):\s*Acordes/i);
-      if (colonM) title = colonM[1].trim();
-      else {
-        // Formato "Acordes de ARTISTA: TITULO"
-        const acordesMatch = raw.match(/^Acordes de\s+(.+?):\s+(.+)/i);
-        if (acordesMatch) {
-          artist = artist || acordesMatch[1].trim();
-          title = acordesMatch[2].trim();
-        } else {
-          // Formato "ARTISTA - TITULO - LaCuerda"
-          const parts = raw.split(' - ').map(s => s.trim()).filter(s => !/lacuerda/i.test(s));
-          if (parts.length >= 2) { artist = artist || parts[0]; title = parts.slice(1).join(' - '); }
-          else if (parts.length === 1) title = parts[0];
+      
+      if (isCifraClub) {
+        // Cifraclub formato: "TITULO - Artista - Cifra Club"
+        const parts = raw.split(' - ');
+        if (parts.length >= 2) {
+          title = parts[0].trim();
+          artist = parts[1].trim();
+        }
+      } else {
+        // Formato "TITULO: Acordes y Letra... (ARTISTA)" — nuevo formato LaCuerda
+        const parenM = raw.match(/\(([^)]+)\)/);
+        if (parenM) artist = parenM[1].trim();
+        const colonM = raw.match(/^([^:]+?):\s*Acordes/i);
+        if (colonM) title = colonM[1].trim();
+        else {
+          // Formato "Acordes de ARTISTA: TITULO"
+          const acordesMatch = raw.match(/^Acordes de\s+(.+?):\s+(.+)/i);
+          if (acordesMatch) {
+            artist = artist || acordesMatch[1].trim();
+            title = acordesMatch[2].trim();
+          } else {
+            // Formato "ARTISTA - TITULO - LaCuerda"
+            const parts = raw.split(' - ').map(s => s.trim()).filter(s => !/lacuerda/i.test(s));
+            if (parts.length >= 2) { artist = artist || parts[0]; title = parts.slice(1).join(' - '); }
+            else if (parts.length === 1) title = parts[0];
+          }
         }
       }
     }
@@ -133,9 +146,15 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
 
     if (rawHtmlBlock && rawHtmlBlock.trim().length > 10) {
       // Limpiamos el texto para que quede puro
+      if (isCifraClub) {
+        rawHtmlBlock = rawHtmlBlock.replace(/&nbsp;/g, ' ');
+      }
+      
       let rawLyrics = rawHtmlBlock
         .replace(/<br\s*\/?>/gi, '\n') // Convertir etiquetas <br> a saltos de línea reales
         .replace(/<[^>]+>/g, '')       // Eliminar cualquier botón o enlace sobrante
+        .replace(/&#\d+;/g, match => String.fromCharCode(match.slice(2, -1))) // Convertir charcodes como &#233;
+        .replace(/&[a-z]+;/gi, ' ') // Quitar entidades HTML sueltas
         .trim();
 
       // Destruir footers de derechos de autor, diccionarios de acordes y transcripción de LaCuerda
