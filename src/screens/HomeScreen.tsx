@@ -204,14 +204,9 @@ export default function HomeScreen({ navigation }: any) {
     return c;
   }, []);
 
-  const renderItem = ({ item, index }: { item: Hymn & { musicalKey?: string }; index: number }) => {
+  const renderItem = ({ item }: { item: Hymn & { musicalKey?: string } }) => {
     const keyColor = getKeyBadgeColors(item.musicalKey || 'C');
     return (
-      <MotiView
-        from={{ opacity: 0, translateY: 10 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: 'timing', duration: 300, delay: Math.min(index * 30, 300) }}
-      >
         <TouchableOpacity
           activeOpacity={0.8}
           className={`flex-row items-center p-5 mb-4 mx-4 rounded-3xl border ${isDarkMode ? 'bg-surface-dark border-white/5 shadow-black/20' : 'bg-white border-slate-100 shadow-slate-200/50'}`}
@@ -246,7 +241,6 @@ export default function HomeScreen({ navigation }: any) {
           </View>
           <ChevronRight color={isDarkMode ? '#9CA3AF' : '#6B7280'} size={24} />
         </TouchableOpacity>
-      </MotiView>
     );
   };
 
@@ -452,6 +446,7 @@ export default function HomeScreen({ navigation }: any) {
       <FlashList
         data={filteredHymns}
         renderItem={renderItem}
+        keyExtractor={(item: any) => item.id}
         // @ts-expect-error FlashList legacy prop
         estimatedItemSize={100}
         contentContainerStyle={{ paddingBottom: 120 }}
