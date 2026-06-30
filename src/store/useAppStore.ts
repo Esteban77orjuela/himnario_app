@@ -46,7 +46,7 @@ interface AppState {
 export const useAppStore = create<AppState>()(
   persist(
     (set) => ({
-      theme: 'system',
+      theme: 'light',
       fontFamily: 'sans',
       fontSize: 18,
       favorites: [],

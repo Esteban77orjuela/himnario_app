@@ -6,9 +6,7 @@ import { useAppStore } from '../store/useAppStore';
 import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { mockHymns, christianSongs } from '../data/hymns';
 import { ArrowLeft, Heart, Minus, Plus, ZoomIn, ZoomOut, Share, Edit2, Play, Pause, Activity, ListPlus, X, Monitor, Trash2, MoreVertical, Youtube } from 'lucide-react-native';
-import { parseLyricsToWords, convertPlainTextToInline } from '../utils/lyricsParser';
 import { transposeChord } from '../utils/chordTransposer';
-import { extractUniqueChords } from '../utils/extractChords';
 import { MotiView } from 'moti';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
@@ -134,15 +132,26 @@ export default function HymnDetailScreen({ route, navigation }: any) {
     };
   }, [isMetronomeActive, currentBpm]);
 
-  const parsedLines = useMemo(() => {
-    if (!hymn) return [];
-    const normalizedLyrics = isCustom ? convertPlainTextToInline(hymn.lyrics) : hymn.lyrics;
-    return parseLyricsToWords(normalizedLyrics);
-  }, [hymn, isCustom]);
-
+  // Extract unique chords directly from raw lyrics (works with chord-only lines format)
   const uniqueChords = useMemo(() => {
-    return extractUniqueChords(parsedLines, transposeSteps);
-  }, [parsedLines, transposeSteps]);
+    if (!hymn) return [];
+    const chordSet = new Set<string>();
+    const CHORD_REGEX = /^[A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\([^)]+\))?(?:\/[A-G][b#]?)?$/;
+    hymn.lyrics.split('\n').forEach(line => {
+      const withoutChords = line.replace(/\[[^\]]*\]/g, '');
+      if (line.trim() !== '' && withoutChords.trim() === '') {
+        // chord-only line
+        const matches = [...line.matchAll(/\[([^\]]+)\]/g)];
+        matches.forEach(m => {
+          const chord = m[1].trim();
+          if (CHORD_REGEX.test(chord)) {
+            chordSet.add(transposeChord(chord, transposeSteps));
+          }
+        });
+      }
+    });
+    return Array.from(chordSet).sort();
+  }, [hymn, transposeSteps]);
 
   const removeCustomSong = useAppStore((state) => state.removeCustomSong);
 
@@ -463,7 +472,7 @@ export default function HymnDetailScreen({ route, navigation }: any) {
 
               <MotiView
                 animate={{ height: isImmersiveMode ? 0 : 'auto', opacity: isImmersiveMode ? 0 : 1 }}
-                className={`flex-row p-1.5 mb-8 rounded-2xl ${isDarkMode ? 'bg-surface-dark/80' : 'bg-white/80'} shadow-sm border border-slate-200/20 overflow-hidden`}
+                className={`flex-row p-1.5 mb-4 rounded-2xl ${isDarkMode ? 'bg-surface-dark/80' : 'bg-white/80'} shadow-sm border border-slate-200/20 overflow-hidden`}
               >
                 <Pressable
                   onPress={() => setShowChords(false)}
@@ -484,41 +493,89 @@ export default function HymnDetailScreen({ route, navigation }: any) {
               </MotiView>
 
               <MotiView 
-                className="mt-6"
+                className="mt-2"
                 animate={{
                   scale: effectiveIsImmersive ? 1.05 : 1,
                   translateY: effectiveIsImmersive ? 20 : 0
                 }}
                 transition={{ type: 'spring', damping: 20 }}
               >
-                  {parsedLines.map((line, lineIndex) => (
-                    <View key={lineIndex} className="flex-row flex-wrap justify-center mb-4" style={{ minHeight: effectiveShowChords ? effectiveFontSize * 2.5 : effectiveFontSize * 1.5 }}>
-                      {line.length === 0 ? (
-                        <Text style={{ fontSize: effectiveFontSize, lineHeight: effectiveFontSize * 1.5 }}> </Text>
-                      ) : (
-                        line.map((segment, segIndex) => (
-                          <View key={segIndex} className="flex-col items-center">
-                            {effectiveShowChords && (
-                              <TouchableOpacity onPress={() => setSelectedChord(segment.chord ? transposeChord(segment.chord, transposeSteps) : null)}>
-                                <Text
-                                  className={`text-center ${fontClass} font-bold ${isDarkMode ? 'text-accent-dark' : 'text-accent'}`}
-                                  style={{ fontSize: effectiveFontSize * 0.75, height: effectiveFontSize, marginBottom: 2 }}
-                                >
-                                  {segment.chord ? transposeChord(segment.chord, transposeSteps) : ' '}
-                                </Text>
-                              </TouchableOpacity>
-                            )}
-                            <Text
-                              className={`text-center ${fontClass} ${isProjectorMode ? 'text-white font-bold' : (isDarkMode ? 'text-text-dark/90' : 'text-text/90')}`}
-                              style={{ fontSize: effectiveFontSize, lineHeight: effectiveFontSize * 1.5 }}
-                            >
-                              {segment.text}
-                            </Text>
-                          </View>
-                        ))
-                      )}
-                    </View>
-                  ))}
+                  {hymn.lyrics.split('\n').map((rawLine, lineIndex) => {
+                    // Strip [chord] markers to get the raw text for lyric detection
+                    const withoutChords = rawLine.replace(/\[[^\]]*\]/g, '');
+                    const isChordOnlyLine = rawLine.trim() !== '' && withoutChords.trim() === '';
+                    // A line is a section label if it has no chords and is short uppercase text (like CORO, Coro:, I, II)
+                    const isSectionLabel = !isChordOnlyLine && rawLine.trim().length > 0 && rawLine.trim().length <= 20 && /^[A-ZÁÉÍÓÚ0-9IVX][A-ZÁÉÍÓÚa-záéíóú0-9IVX.:/ -]*:?\s*$/.test(rawLine.trim()) && !/[a-záéíóúñ]{3,}/.test(rawLine);
+                    const isEmpty = rawLine.trim() === '';
+
+                    if (isEmpty) {
+                      return <View key={lineIndex} style={{ height: effectiveFontSize * 0.5 }} />;
+                    }
+
+                    if (isChordOnlyLine && effectiveShowChords) {
+                      // Render chord line: replace [Chord] with transposed chord, keep spaces
+                      const chordLineText = rawLine.replace(/\[([^\]]+)\]/g, (_match, chord) => {
+                        const trimmed = chord.trim();
+                        return transposeChord(trimmed, transposeSteps);
+                      });
+                      return (
+                        <Text
+                          key={lineIndex}
+                          selectable={false}
+                          style={{
+                            fontFamily: 'Courier New',
+                            fontSize: effectiveFontSize * 0.9,
+                            lineHeight: effectiveFontSize * 1.1,
+                            color: isDarkMode ? '#7CB9FF' : '#0066CC',
+                            fontWeight: 'bold',
+                            marginBottom: -2,
+                          }}
+                        >
+                          {chordLineText}
+                        </Text>
+                      );
+                    }
+
+                    if (isSectionLabel) {
+                      return (
+                        <Text
+                          key={lineIndex}
+                          style={{
+                            fontSize: effectiveFontSize * 0.85,
+                            lineHeight: effectiveFontSize * 1.4,
+                            fontWeight: 'bold',
+                            color: isDarkMode ? '#9CA3AF' : '#555555',
+                            marginTop: effectiveFontSize * 0.4,
+                          }}
+                        >
+                          {rawLine}
+                        </Text>
+                      );
+                    }
+
+                    // Regular lyric line — strip any remaining inline chords if chords hidden
+                    const lyricText = effectiveShowChords
+                      ? rawLine.replace(/\[[^\]]*\]/g, '')
+                      : rawLine.replace(/\[[^\]]*\]/g, '');
+
+                    return (
+                      <Text
+                        key={lineIndex}
+                        style={{
+                          fontFamily: 'Courier New',
+                          fontSize: effectiveFontSize,
+                          lineHeight: effectiveFontSize * 1.25,
+                          color: isProjectorMode
+                            ? '#FFFFFF'
+                            : isDarkMode ? 'rgba(255,255,255,0.9)' : 'rgba(0,0,0,0.87)',
+                          marginBottom: 2,
+                        }}
+                      >
+                        {lyricText}
+                      </Text>
+                    );
+                  })}
+
               </MotiView>
             </View>
           </Pressable>
