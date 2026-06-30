@@ -1,13 +1,11 @@
-import { View, Text, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useAppStore } from '../store/useAppStore';
 import { useIsDarkMode } from '../utils/useIsDarkMode';
-import { FlashList } from '@shopify/flash-list';
 import { mockHymns, christianSongs, Hymn } from '../data/hymns';
 import { Search, ChevronRight, Sun, Moon, X, Heart, Music2, BookOpen, Users, List } from 'lucide-react-native';
 import { MotiView } from 'moti';
-import Fuse from 'fuse.js';
 import { detectKey } from '../utils/keyDetector';
 import { detectArtistFromTitle } from '../utils/artistDetector';
 
@@ -160,12 +158,12 @@ export default function HomeScreen({ navigation }: any) {
   }, [hymnsWithKeys, activeFilter, favorites]);
 
   const artistFilterOptions = useMemo(() => {
-    return Array.from(new Set(allHymns.map(h => h.artist).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+    return Array.from(new Set(allHymns.map(h => h.artist).filter((a): a is string => Boolean(a)))).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
   }, [allHymns]);
 
   const filteredHymns = useMemo(() => {
     let result = hymnsWithKeys as (Hymn & { musicalKey: string })[];
-
+    
     if (activeFilter === 'favorites') {
       result = result.filter(h => favorites.includes(h.id));
     } else if (activeFilter === 'alabanza') {
@@ -180,24 +178,45 @@ export default function HomeScreen({ navigation }: any) {
       }
       result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
       if (!searchQuery) return result;
-      const fuse = new Fuse(result, { keys: ['title', 'artist'], threshold: 0.3, ignoreLocation: true });
-      return fuse.search(searchQuery).map(r => r.item);
+      const q = searchQuery.toLowerCase().trim();
+      return result.filter(h =>
+        h.title.toLowerCase().includes(q) ||
+        (h.artist && h.artist.toLowerCase().includes(q))
+      );
     }
-    // 'todas' falls through — no category filter
-
+    
     if (activeKeyFilter) {
       result = result.filter(h => h.musicalKey === activeKeyFilter);
     }
-    result = [...result].sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
-
-    if (!searchQuery) return result;
-
-    const fuse = new Fuse(result, {
-      keys: ['title', 'lyrics', 'number'],
-      threshold: 0.3,
-      ignoreLocation: true,
-    });
-    return fuse.search(searchQuery).map(r => r.item);
+    
+    if (!searchQuery) {
+      return [...result].sort((a, b) => a.title.localeCompare(b.title, 'es', { sensitivity: 'base' }));
+    }
+    
+    const q = searchQuery.toLowerCase().trim();
+    const scored: { hymn: typeof result[0]; score: number }[] = [];
+    for (const h of result) {
+      const title = h.title || '';
+      const lyrics = h.lyrics || '';
+      const numberStr = String(h.number != null ? h.number : '');
+      const titleLower = title.toLowerCase();
+      const lyricsLower = lyrics.toLowerCase();
+      let score: number;
+      if (titleLower === q) score = 0;
+      else if (titleLower.startsWith(q)) score = 1;
+      else if (titleLower.includes(q)) score = 2;
+      else if (lyricsLower.includes(q)) score = 3;
+      else if (numberStr.includes(q)) score = 4;
+      else continue;
+      scored.push({ hymn: h, score });
+    }
+    
+    return scored
+      .sort((a, b) => {
+        if (a.score !== b.score) return a.score - b.score;
+        return a.hymn.title.localeCompare(b.hymn.title, 'es', { sensitivity: 'base' });
+      })
+      .map(s => s.hymn);
   }, [hymnsWithKeys, activeFilter, activeKeyFilter, activeArtistFilter, favorites, searchQuery]);
 
   const getKeyBadgeColors = useCallback((key: string) => {
@@ -219,6 +238,9 @@ export default function HomeScreen({ navigation }: any) {
 
   const renderItem = ({ item }: { item: Hymn & { musicalKey?: string } }) => {
     const keyColor = getKeyBadgeColors(item.musicalKey || 'C');
+    const title = item.title || 'Sin título';
+    const artist = item.artist || '';
+    const category = item.category || '';
     return (
       <TouchableOpacity
         activeOpacity={0.8}
@@ -237,18 +259,18 @@ export default function HomeScreen({ navigation }: any) {
           </View>
           <View className="flex-1 justify-center">
             <Text className={`font-sans font-bold text-lg mb-0.5 ${isDarkMode ? 'text-text-dark' : 'text-text'}`} numberOfLines={1}>
-              {item.title}
+              {title}
             </Text>
             <View className="flex-row items-center">
-              {item.artist ? (
+              {artist ? (
                 <Text className={`font-sans text-xs ${isDarkMode ? 'text-slate-400' : 'text-slate-500'}`}>
-                  {item.artist}
+                  {artist}
                 </Text>
               ) : null}
-              {item.artist && item.category ? (
+              {artist && category ? (
                 <Text className={`font-sans text-xs mx-1.5 ${isDarkMode ? 'text-slate-600' : 'text-slate-300'}`}>·</Text>
               ) : null}
-              <Text className={`font-sans text-xs ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>{item.category}</Text>
+              <Text className={`font-sans text-xs ${isDarkMode ? 'text-muted-dark' : 'text-muted'}`}>{category}</Text>
             </View>
           </View>
         </View>
@@ -429,10 +451,11 @@ export default function HomeScreen({ navigation }: any) {
       <View className={`flex-row items-center px-4 py-3 mb-4 rounded-2xl ${isDarkMode ? 'bg-surface-dark/80' : 'bg-white/80'} border border-slate-200/20 shadow-sm`}>
         <Search color={isDarkMode ? '#94A3B8' : '#64748B'} size={20} />
         <TextInput
-          placeholder="Buscar por título o número..."
+          placeholder="Buscar por título, letra o número..."
           placeholderTextColor={isDarkMode ? '#94A3B8' : '#64748B'}
           value={searchQuery}
           onChangeText={setSearchQuery}
+          autoCorrect={false}
           className={`flex-1 ml-3 font-sans text-base ${isDarkMode ? 'text-text-dark' : 'text-text'}`}
         />
         {searchQuery.length > 0 && (
@@ -445,16 +468,31 @@ export default function HomeScreen({ navigation }: any) {
   );
 
   return (
-    <SafeAreaView className={`flex-1 ${isDarkMode ? 'bg-background-dark' : 'bg-background'}`}>
-      <FlashList
+    <SafeAreaView style={{ flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }}>
+      <View
+        style={{
+          backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
+          borderBottomWidth: 1,
+          borderBottomColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+          shadowColor: isDarkMode ? '#000' : '#94a3b8',
+          shadowOpacity: isDarkMode ? 0.3 : 0.15,
+          shadowRadius: 12,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 8,
+        }}
+      >
+        {ListHeader()}
+      </View>
+      <FlatList
         data={filteredHymns}
         renderItem={renderItem}
         keyExtractor={(item: any) => item.id}
-        // @ts-expect-error FlashList legacy prop
-        estimatedItemSize={100}
-        ListHeaderComponent={ListHeader}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}
+        removeClippedSubviews={true}
+        maxToRenderPerBatch={20}
+        windowSize={7}
+        initialNumToRender={10}
       />
     </SafeAreaView>
   );
