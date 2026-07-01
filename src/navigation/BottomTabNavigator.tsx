@@ -3,7 +3,8 @@ import { createBottomTabNavigator, BottomTabBarProps } from '@react-navigation/b
 import { BlurView } from 'expo-blur';
 import { Home, ListMusic, Settings, Download } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useAppStore } from '../store/useAppStore';
+import { useIsDarkMode } from '../utils/useIsDarkMode';
+import type { MainTabParamList } from '../types/navigation';
 import { MotiView } from 'moti';
 
 // Screens
@@ -12,14 +13,14 @@ import SetlistsScreen from '../screens/SetlistsScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 import ImportScreen from '../screens/ImportScreen';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
-  const isDarkMode = useAppStore((s) => s.theme === 'dark');
+  const isDarkMode = useIsDarkMode();
 
-  const activeColor = isDarkMode ? '#A78BFA' : '#4F46E5'; // accent.dark : primary
-  const inactiveColor = isDarkMode ? '#9CA3AF' : '#6B7280'; // muted.dark : muted
+  const activeColor = isDarkMode ? '#D88F2E' : '#FF8C00'; // accent.dark : primary
+  const inactiveColor = isDarkMode ? '#9CA3AF' : '#94A3B8'; // muted.dark : muted
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
@@ -76,7 +77,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   <IconComponent
                     color={isFocused ? activeColor : inactiveColor}
                     size={24}
-                    strokeWidth={isFocused ? 2.5 : 2}
+                    strokeWidth={isFocused ? 2 : 1.5}
                   />
                 </MotiView>
               </TouchableOpacity>

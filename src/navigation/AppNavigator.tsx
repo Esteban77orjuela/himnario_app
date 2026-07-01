@@ -2,12 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import BottomTabNavigator from './BottomTabNavigator';
 import HymnDetailScreen from '../screens/HymnDetailScreen';
 import SetlistDetailScreen from '../screens/SetlistDetailScreen';
-
-export type RootStackParamList = {
-  Main: undefined;
-  HymnDetail: { hymnId: string };
-  SetlistDetail: { setlistId: string; setlistName: string };
-};
+import type { RootStackParamList } from '../types/navigation';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 

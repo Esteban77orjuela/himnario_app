@@ -3,7 +3,29 @@
 
 ---
 
-## [1.8.2] — 2026-06-22 | README público, corrección de favoritos importados y backup completo
+## [1.9.0] — 2026-06-30 | Marco SDLC profesional, correcciones de calidad y tipado
++### Marco de trabajo SDLC
++ - Se creó `docs/SDLC_FRAMEWORK.md`: las 14 fases del ciclo de vida profesional del software, documentadas y aplicadas al contexto de AppHimnario.
++
++### Correcciones de calidad
++ - `BottomTabNavigator.tsx`: ahora usa `useIsDarkMode()` en lugar de `theme === 'dark'`, respetando correctamente el modo `system`.
++ - `useAppStore.ts`: `restoreBackup` ahora restaura `theme`, `fontFamily` y `fontSize`.
++ - `SettingsScreen.tsx`: reemplazados `console.error` por `logger.error`.
++ - `HymnDetailScreen.tsx`: reemplazados `console.error` por `logger.error`.
++
++### Tipado profesional
++ - Se creó `src/types/navigation.ts`: tipos compartidos para toda la navegación (`RootStackParamList`, `RootStackNavigationProp`, etc.).
++ - `HomeScreen.tsx`: eliminado `any` en parámetros de navegación y acceso a `musicalKey`.
++ - `HymnDetailScreen.tsx`: eliminado `any` en gestos, scroll y parámetros de navegación. Tipado con `PinchGestureHandlerGestureEvent`, `NativeSyntheticEvent<NativeScrollEvent>`.
++ - `ImportScreen.tsx`: eliminado `any` en navegación.
++ - `SetlistsScreen.tsx`: eliminado `any` en navegación.
++ - `SetlistDetailScreen.tsx`: tipado completo con `SetlistDetailScreenProps`.
++ - `AppNavigator.tsx`: importa tipos desde `src/types/navigation.ts`.
++ - `BottomTabNavigator.tsx`: `createBottomTabNavigator<MainTabParamList>()`.
++
++---
++
++## [1.8.2] — 2026-06-22 | README público, corrección de favoritos importados y backup completo
 ### Repositorio público
 - Se creó `README.md` en la raíz con descripción del producto, stack, instalación, scripts, estructura y estado técnico real del proyecto.
 

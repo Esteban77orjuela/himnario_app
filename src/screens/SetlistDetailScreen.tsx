@@ -10,7 +10,9 @@ import { useEffect } from 'react';
 import { detectKey } from '../utils/keyDetector';
 import { detectArtistFromTitle } from '../utils/artistDetector';
 
-export default function SetlistDetailScreen({ route, navigation }: any) {
+import type { SetlistDetailScreenProps } from '../types/navigation';
+
+export default function SetlistDetailScreen({ route, navigation }: SetlistDetailScreenProps) {
   const { setlistId, setlistName } = route.params;
   const isDarkMode = useIsDarkMode();
   const customSongs = useAppStore((state) => state.customSongs);

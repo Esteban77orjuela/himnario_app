@@ -20,6 +20,7 @@ interface AppState {
   songNotes: Record<string, string>;
   songPlayCount: Record<string, number>;
   songKeys: Record<string, string>;
+  songTranspositions: Record<string, number>;
   setlists: Setlist[];
   
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
@@ -34,6 +35,7 @@ interface AppState {
   setSongNote: (id: string, note: string) => void;
   incrementPlayCount: (id: string) => void;
   setSongKey: (id: string, key: string) => void;
+  setSongTransposition: (id: string, steps: number) => void;
   toggleFavorite: (hymnId: string) => void;
   
   createSetlist: (name: string) => void;
@@ -56,6 +58,7 @@ export const useAppStore = create<AppState>()(
       songNotes: {},
       songPlayCount: {},
       songKeys: {},
+      songTranspositions: {},
       setlists: [],
       
       setTheme: (theme) => set({ theme }),
@@ -83,6 +86,10 @@ export const useAppStore = create<AppState>()(
       setSongKey: (id, key) =>
         set((state) => ({
           songKeys: { ...state.songKeys, [id]: key },
+        })),
+      setSongTransposition: (id, steps) =>
+        set((state) => ({
+          songTranspositions: { ...state.songTranspositions, [id]: steps },
         })),
       toggleFavorite: (hymnId) =>
         set((state) => ({
@@ -148,6 +155,10 @@ export const useAppStore = create<AppState>()(
           songNotes: data.songNotes || state.songNotes,
           songPlayCount: data.songPlayCount || state.songPlayCount,
           songKeys: data.songKeys || state.songKeys,
+          songTranspositions: data.songTranspositions || state.songTranspositions,
+          theme: data.theme || state.theme,
+          fontFamily: data.fontFamily || state.fontFamily,
+          fontSize: data.fontSize ?? state.fontSize,
         })),
     }),
     {

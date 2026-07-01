@@ -6,6 +6,7 @@ import { Moon, Sun, DownloadCloud, UploadCloud, Info, Type } from 'lucide-react-
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as DocumentPicker from 'expo-document-picker';
+import { logger } from '../utils/logger';
 
 export default function SettingsScreen() {
   const isDarkMode = useIsDarkMode();
@@ -50,7 +51,7 @@ export default function SettingsScreen() {
         Alert.alert('Error', 'No se puede compartir el archivo en este dispositivo');
       }
     } catch (error) {
-      console.error(error);
+      logger.error('Error al exportar backup', error);
       Alert.alert('Error', 'No se pudo crear la copia de seguridad');
     }
   };
@@ -86,7 +87,7 @@ export default function SettingsScreen() {
         Alert.alert('Archivo Inválido', 'El archivo seleccionado no tiene el formato correcto');
       }
     } catch (error) {
-      console.error(error);
+      logger.error('Error al importar backup', error);
       Alert.alert('Error', 'No se pudo leer el archivo de copia de seguridad');
     }
   };

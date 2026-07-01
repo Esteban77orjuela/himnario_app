@@ -8,36 +8,36 @@ module.exports = {
     extend: {
       colors: {
         background: {
-          DEFAULT: '#F7F4F0',
-          dark: '#0B0815',
+          DEFAULT: '#F8FAFC',
+          dark: '#0F1A18',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          dark: '#16112B',
+          dark: '#1A2E2C',
         },
         'surface-elevated': {
           DEFAULT: '#FFFFFF',
-          dark: '#1E1936',
+          dark: '#243836',
         },
         primary: {
-          DEFAULT: '#6D4FC6',
-          dark: '#A78BFA',
+          DEFAULT: '#FF8C00',
+          dark: '#D88F2E',
         },
         accent: {
-          DEFAULT: '#E04098',
-          dark: '#F472B6',
+          DEFAULT: '#FF6B00',
+          dark: '#F0B04C',
         },
         text: {
-          DEFAULT: '#1A1528',
-          dark: '#F1F0F7',
+          DEFAULT: '#1E293B',
+          dark: '#F1E4DB',
         },
         muted: {
-          DEFAULT: '#8B84A0',
-          dark: '#9C96B8',
+          DEFAULT: '#94A3B8',
+          dark: '#A8938A',
         },
         border: {
-          DEFAULT: '#E8E4EC',
-          dark: '#2A2444',
+          DEFAULT: '#F1F5F9',
+          dark: '#2A3E3C',
         },
       },
       fontFamily: {

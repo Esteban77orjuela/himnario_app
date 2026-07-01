@@ -4,14 +4,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Download, Link as LinkIcon, CheckCircle, Search } from 'lucide-react-native';
 import { scrapeSongFromUrl } from '../services/scraperService';
 import { useAppStore } from '../store/useAppStore';
+import { christianSongs } from '../data/hymns';
 import { useIsDarkMode } from '../utils/useIsDarkMode';
 
-export default function ImportScreen({ navigation }: any) {
+import type { RootStackNavigationProp } from '../types/navigation';
+
+export default function ImportScreen({ navigation }: { navigation: RootStackNavigationProp }) {
   const [url, setUrl] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [category, setCategory] = useState('Otra');
   const [loading, setLoading] = useState(false);
   const addCustomSong = useAppStore((state) => state.addCustomSong);
+  const customSongs = useAppStore((state) => state.customSongs);
   const isDarkMode = useIsDarkMode();
 
   const handleSearchLaCuerda = () => {
@@ -43,6 +47,23 @@ export default function ImportScreen({ navigation }: any) {
     setLoading(false);
 
     if (result.success && result.lyrics) {
+      const titleLower = (result.title || '').toLowerCase().trim();
+      const artistLower = (result.artist || '').toLowerCase().trim();
+      const existsNative = christianSongs.some(s =>
+        s.title.toLowerCase().trim() === titleLower &&
+        (!artistLower || (s.artist && s.artist.toLowerCase().trim() === artistLower))
+      );
+      if (existsNative) {
+        Alert.alert('Canción duplicada', `"${result.title}" ya existe en el himnario nativo.`);
+        return;
+      }
+      const existsCustom = customSongs.some((s: { title?: string }) =>
+        s.title && s.title.toLowerCase().trim() === titleLower
+      );
+      if (existsCustom) {
+        Alert.alert('Canción duplicada', `"${result.title}" ya fue importada anteriormente.`);
+        return;
+      }
       const songWithCategory = { ...result, category: category !== 'Otra' ? category : 'Importada' };
       addCustomSong(songWithCategory);
       Alert.alert(
@@ -53,7 +74,7 @@ export default function ImportScreen({ navigation }: any) {
             text: 'Ver Canción', 
             onPress: () => navigation.navigate('HymnDetail', { 
               hymnId: result.title,
-              hymn: { id: result.title, title: result.title, artist: result.artist, lyrics: result.lyrics, category: songWithCategory.category }, 
+              hymn: { id: result.title, title: result.title, artist: result.artist, lyrics: result.lyrics, category: songWithCategory.category, musicalKey: result.musicalKey }, 
               isCustom: true 
             }) 
           },

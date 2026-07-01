@@ -46,10 +46,11 @@
 
 ### Fases 0-13 del SDLC
 - [x] Visión, Requerimientos, Arquitectura, Diseño, DB, Seguridad
-- [x] Testing (45 tests unitarios)
+- [x] Testing (84 tests unitarios)
 - [x] CI/CD (GitHub Actions con tsc + eslint + test + audit)
-- [x] Observabilidad (ErrorBoundary)
+- [x] Observabilidad (ErrorBoundary, logger)
 - [x] Mantenimiento (bitácora, versionado, ADR)
+- [x] Marco SDLC documentado (docs/SDLC_FRAMEWORK.md)
 
 ---
 
@@ -74,7 +75,7 @@
 | 3 | Diseño Técnico | ✅ Implementado |
 | 4 | Desarrollo | ✅ Completo |
 | 5 | Base de Datos | ✅ AsyncStorage (Offline) |
-| 6 | Testing | ✅ 45 tests |
+| 6 | Testing | ✅ 84 tests |
 | 7 | Ciberseguridad | ✅ Sin datos sensibles |
 | 8 | Docker | ⬛ N/A (app móvil) |
 | 9 | CI/CD | ✅ GitHub Actions |

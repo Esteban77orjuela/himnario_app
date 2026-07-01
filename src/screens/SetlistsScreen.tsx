@@ -5,7 +5,9 @@ import { useAppStore } from '../store/useAppStore';
 import { useIsDarkMode } from '../utils/useIsDarkMode';
 import { Heart, ListMusic, Plus, Trash2, ChevronRight } from 'lucide-react-native';
 
-export default function SetlistsScreen({ navigation }: any) {
+import type { RootStackNavigationProp } from '../types/navigation';
+
+export default function SetlistsScreen({ navigation }: { navigation: RootStackNavigationProp }) {
   const isDarkMode = useIsDarkMode();
   const setlists = useAppStore((state) => state.setlists);
   const favorites = useAppStore((state) => state.favorites);

@@ -5,12 +5,15 @@
  */
 
 import { logger } from '../utils/logger';
+import { detectKey } from '../utils/keyDetector';
+import { isChordLine } from '../utils/lyricsParser';
 
 export interface ScrapedSong {
   success: boolean;
   title?: string;
   artist?: string;
   lyrics?: string;
+  musicalKey?: string;
   source?: string;
   error?: string;
   category?: string;
@@ -153,7 +156,7 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
       let rawLyrics = rawHtmlBlock
         .replace(/<br\s*\/?>/gi, '\n') // Convertir etiquetas <br> a saltos de línea reales
         .replace(/<[^>]+>/g, '')       // Eliminar cualquier botón o enlace sobrante
-        .replace(/&#\d+;/g, match => String.fromCharCode(match.slice(2, -1))) // Convertir charcodes como &#233;
+        .replace(/&#(\d+);/g, (_match: string, code: string) => String.fromCharCode(parseInt(code, 10))) // Convertir charcodes como &#233;
         .replace(/&[a-z]+;/gi, ' ') // Quitar entidades HTML sueltas
         .trim();
 
@@ -171,10 +174,23 @@ export const scrapeSongFromUrl = async (url: string): Promise<ScrapedSong> => {
       
       rawLyrics = rawLyrics.trim();
 
+      // Convertir: envolver acordes en [Chord] preservando lineas originales
+      const chordLines = rawLyrics.split('\n');
+      const wrappedLines = chordLines.map(line => {
+        if (isChordLine(line)) {
+          return line.replace(/\b([A-G][b#]?(?:m|maj|dim|aug|sus|add|[0-9])*(?:\([^)]+\))?(?:\/[A-G][b#]?)?)\b/g, '[$1]');
+        }
+        return line;
+      });
+      rawLyrics = wrappedLines.join('\n');
+
+      const key = detectKey(rawLyrics);
+
       return {
         title,
         artist: artist || undefined,
         lyrics: rawLyrics,
+        musicalKey: key,
         source: url,
         success: true
       };
