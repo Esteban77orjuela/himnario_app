@@ -141,9 +141,9 @@ export default function ImportScreen({ navigation }: { navigation: RootStackNavi
             <View className={`flex-row items-center rounded-xl px-4 py-3 border mb-4 ${isDarkMode ? 'bg-background-dark/50 border-slate-700' : 'bg-slate-50 border-slate-200'}`}>
             <LinkIcon size={20} color="#94a3b8" />
             <TextInput
-              className="flex-1 text-white ml-3 text-base"
+              className={`flex-1 ml-3 text-base ${isDarkMode ? 'text-white' : 'text-slate-900'}`}
               placeholder="https://acordes.lacuerda.net/... o cifraclub.com/..."
-              placeholderTextColor="#64748b"
+              placeholderTextColor={isDarkMode ? '#64748b' : '#94a3b8'}
               value={url}
               onChangeText={setUrl}
               autoCapitalize="none"
@@ -152,7 +152,7 @@ export default function ImportScreen({ navigation }: { navigation: RootStackNavi
             />
           </View>
 
-          <Text className="text-slate-300 text-sm font-medium mb-3 uppercase tracking-wider">
+          <Text className={`text-sm font-medium mb-3 uppercase tracking-wider ${isDarkMode ? 'text-slate-300' : 'text-slate-500'}`}>
             Categoría (Opcional)
           </Text>
           <View className="flex-row gap-2">
@@ -161,10 +161,10 @@ export default function ImportScreen({ navigation }: { navigation: RootStackNavi
                 key={cat}
                 onPress={() => setCategory(cat)}
                 className={`flex-1 py-2 rounded-lg border items-center ${
-                  category === cat ? 'bg-blue-500 border-blue-500' : 'bg-slate-900 border-slate-700'
+                  category === cat ? 'bg-blue-500 border-blue-500' : isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
                 }`}
               >
-                <Text className={`font-medium ${category === cat ? 'text-white' : 'text-slate-400'}`}>
+                <Text className={`font-medium ${category === cat ? 'text-white' : isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>
                   {cat}
                 </Text>
               </TouchableOpacity>

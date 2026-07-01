@@ -274,20 +274,20 @@ export default function HomeScreen({ navigation }: { navigation: RootStackNaviga
                 }}
                 className={`items-center py-3 px-4 rounded-2xl border ${isActive
                   ? `${isDarkMode ? 'bg-primary-dark' : 'bg-primary'} border-transparent`
-                  : `${isDarkMode ? 'bg-surface-dark border-slate-700/50' : 'bg-white border-slate-200/70'}`
+                  : `${isDarkMode ? 'bg-surface-dark border-slate-700/50' : 'bg-white/90 border-slate-200/70'}`
                   }`}
                 style={{ minWidth: 80 }}
               >
                 <Icon
                   size={22}
-                  color={isActive ? '#FFFFFF' : isDarkMode ? '#9CA3AF' : '#FFFFFF'}
+                  color={isActive ? '#FFFFFF' : isDarkMode ? '#9CA3AF' : '#64748B'}
                   fill={isActive && key === 'favorites' ? '#FFFFFF' : 'transparent'}
                   strokeWidth={1.5}
                 />
-                <Text className={`font-sans font-bold text-xs mt-1.5 ${isActive ? 'text-white' : isDarkMode ? 'text-slate-300' : 'text-white/80'}`}>
+                <Text className={`font-sans font-bold text-xs mt-1.5 ${isActive ? 'text-white' : isDarkMode ? 'text-slate-300' : 'text-slate-700'}`}>
                   {label}
                 </Text>
-                <Text className={`text-[10px] font-bold mt-0.5 ${isActive ? 'text-white/80' : isDarkMode ? 'text-slate-500' : 'text-white/60'}`}>
+                <Text className={`text-[10px] font-bold mt-0.5 ${isActive ? 'text-white/80' : isDarkMode ? 'text-slate-500' : 'text-slate-400'}`}>
                   {count}
                 </Text>
               </TouchableOpacity>
@@ -312,7 +312,7 @@ export default function HomeScreen({ navigation }: { navigation: RootStackNaviga
                 : `${isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200'}`
                 }`}
             >
-              <Text className={`text-xs font-bold ${!activeArtistFilter ? (isDarkMode ? 'text-primary-dark' : 'text-white') : isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Todos los Artistas</Text>
+              <Text className={`text-xs font-bold ${!activeArtistFilter ? (isDarkMode ? 'text-primary-dark' : 'text-primary') : isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Todos los Artistas</Text>
             </TouchableOpacity>
             {artistFilterOptions.map(artist => {
               const isActiveArtist = activeArtistFilter === artist;
@@ -352,7 +352,7 @@ export default function HomeScreen({ navigation }: { navigation: RootStackNaviga
                 : `${isDarkMode ? 'bg-surface-dark border-slate-700' : 'bg-white border-slate-200'}`
                 }`}
             >
-              <Text className={`text-xs font-bold ${!activeKeyFilter ? (isDarkMode ? 'text-primary-dark' : 'text-white') : isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Todas</Text>
+              <Text className={`text-xs font-bold ${!activeKeyFilter ? (isDarkMode ? 'text-primary-dark' : 'text-primary') : isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>Todas</Text>
             </TouchableOpacity>
             {keyFilterOptions.map(k => {
               const isActiveKey = activeKeyFilter === k;
@@ -434,7 +434,7 @@ export default function HomeScreen({ navigation }: { navigation: RootStackNaviga
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc' }}>
+    <View style={{ flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#F8FAFC' }}>
       <View
         style={{
           borderBottomLeftRadius: isDarkMode ? 0 : 40,
@@ -449,7 +449,7 @@ export default function HomeScreen({ navigation }: { navigation: RootStackNaviga
       >
         {!isDarkMode && (
           <LinearGradient
-            colors={['#FFAD33', '#FF7A00']}
+            colors={['#FFB74D', '#FF8C00', '#FF5500']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={{ ...StyleSheet.absoluteFillObject }}

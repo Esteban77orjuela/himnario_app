@@ -23,6 +23,10 @@ module.exports = {
           DEFAULT: '#FF8C00',
           dark: '#D88F2E',
         },
+        'primary-light': {
+          DEFAULT: '#FFB74D',
+          dark: '#F0C27A',
+        },
         accent: {
           DEFAULT: '#FF6B00',
           dark: '#F0B04C',
@@ -38,6 +42,10 @@ module.exports = {
         border: {
           DEFAULT: '#F1F5F9',
           dark: '#2A3E3C',
+        },
+        warm: {
+          DEFAULT: '#FFF8F3',
+          dark: '#1A2524',
         },
       },
       fontFamily: {
