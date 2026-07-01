@@ -161,7 +161,7 @@ export default function ImportScreen({ navigation }: { navigation: RootStackNavi
                 key={cat}
                 onPress={() => setCategory(cat)}
                 className={`flex-1 py-2 rounded-lg border items-center ${
-                  category === cat ? 'bg-blue-500 border-blue-500' : isDarkMode ? 'bg-slate-900 border-slate-700' : 'bg-white border-slate-200'
+                  category === cat ? 'bg-blue-500 border-blue-500' : isDarkMode ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-slate-200'
                 }`}
               >
                 <Text className={`font-medium ${category === cat ? 'text-white' : isDarkMode ? 'text-slate-400' : 'text-slate-600'}`}>

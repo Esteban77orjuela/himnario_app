@@ -229,7 +229,7 @@ export default function HymnDetailScreen({ route, navigation }: HymnDetailScreen
   }
 
   return (
-    <SafeAreaView className="flex-1" style={{ backgroundColor: isProjectorMode ? '#000000' : (isDarkMode ? '#0F1A18' : '#F8FAFC') }}>
+    <SafeAreaView className="flex-1" style={{ backgroundColor: isProjectorMode ? '#000000' : (isDarkMode ? '#0D0D10' : '#F8FAFC') }}>
       <MotiView
         animate={{
           opacity: effectiveIsImmersive ? 0 : 1,

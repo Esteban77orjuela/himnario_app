@@ -9,15 +9,15 @@ module.exports = {
       colors: {
         background: {
           DEFAULT: '#F8FAFC',
-          dark: '#0F1A18',
+          dark: '#0D0D10',
         },
         surface: {
           DEFAULT: '#FFFFFF',
-          dark: '#1A2E2C',
+          dark: '#18181B',
         },
         'surface-elevated': {
           DEFAULT: '#FFFFFF',
-          dark: '#243836',
+          dark: '#212124',
         },
         primary: {
           DEFAULT: '#FF8C00',
@@ -33,19 +33,19 @@ module.exports = {
         },
         text: {
           DEFAULT: '#1E293B',
-          dark: '#F1E4DB',
+          dark: '#EDE4DC',
         },
         muted: {
           DEFAULT: '#94A3B8',
-          dark: '#A8938A',
+          dark: '#A8988A',
         },
         border: {
           DEFAULT: '#F1F5F9',
-          dark: '#2A3E3C',
+          dark: '#27272A',
         },
         warm: {
           DEFAULT: '#FFF8F3',
-          dark: '#1A2524',
+          dark: '#141417',
         },
       },
       fontFamily: {

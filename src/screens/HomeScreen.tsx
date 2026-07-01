@@ -434,14 +434,14 @@ export default function HomeScreen({ navigation }: { navigation: RootStackNaviga
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: isDarkMode ? '#0f172a' : '#F8FAFC' }}>
+    <View style={{ flex: 1, backgroundColor: isDarkMode ? '#0D0D10' : '#F8FAFC' }}>
       <View
         style={{
           borderBottomLeftRadius: isDarkMode ? 0 : 40,
           borderBottomRightRadius: isDarkMode ? 0 : 40,
           overflow: 'hidden',
           paddingTop: insets.top,
-          backgroundColor: isDarkMode ? '#0f172a' : 'transparent',
+          backgroundColor: isDarkMode ? '#0D0D10' : 'transparent',
           borderBottomWidth: isDarkMode ? 1 : 0,
           borderBottomColor: isDarkMode ? 'rgba(255,255,255,0.06)' : 'transparent',
           zIndex: 10,
